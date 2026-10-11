@@ -1,0 +1,61 @@
+SELECTED_OUTPUT
+ -file golden.tsv
+ -reset false
+ -high_precision true
+USER_PUNCH
+ -headings pH Ca Mg SO4 Ba Sr HC CO3 CO2 CaC CaHC CaS CaOH MgC MgHC MgS MgS2 MgOH BaS SrS BaOH BaC BaHC SrOH SrC SrHC H OH I CalciteSI GypsumSI BariteSI CelestiteSI logWater
+ -start
+ 10 PUNCH -LA("H+"), MOL("Ca+2"), MOL("Mg+2"), MOL("SO4-2"), MOL("Ba+2"), MOL("Sr+2"), MOL("HCO3-"), MOL("CO3-2"), MOL("CO2"), MOL("CaCO3"), MOL("CaHCO3+"), MOL("CaSO4"), MOL("CaOH+"), MOL("MgCO3"), MOL("MgHCO3+"), MOL("MgSO4"), MOL("Mg(SO4)2-2"), MOL("MgOH+"), MOL("BaSO4"), MOL("SrSO4"), MOL("BaOH+"), MOL("BaCO3"), MOL("BaHCO3+"), MOL("SrOH+"), MOL("SrCO3"), MOL("SrHCO3+"), MOL("H+"), MOL("OH-"), MU, SI("Calcite"), SI("Gypsum"), SI("Barite"), SI("Celestite"), LA("H2O")
+ -end
+SOLUTION 1
+ temp 25
+ pH 7
+ units mol/kgw
+ Ca 0.001
+ Mg 0.001
+ Ba 0.00001
+ Sr 0.00002
+ C 0.001
+ S 0.001
+ Na 0.001
+ Cl 0.001
+END
+SOLUTION 2
+ temp 25
+ pH 8
+ units mol/kgw
+ Ca 0.002
+ Mg 0.003
+ Ba 0.00002
+ Sr 0.00001
+ C 0.01
+ S 0.001
+ Na 0.001
+ Cl 0.001
+END
+SOLUTION 3
+ temp 25
+ pH 9
+ units mol/kgw
+ Ca 0.002
+ Mg 0.001
+ Ba 0.00001
+ Sr 0.00003
+ C 0.01
+ S 0.01
+ Na 0.001
+ Cl 0.001
+END
+SOLUTION 4
+ temp 25
+ pH 10
+ units mol/kgw
+ Ca 0.001
+ Mg 0.001
+ Ba 0.00003
+ Sr 0.00002
+ C 0.001
+ S 0.001
+ Na 0.001
+ Cl 0.001
+END

@@ -1,0 +1,16 @@
+engine=USGS PHREEQC 3.8.6-17100
+planned_database=phreeqc.dat
+database_sha256=59373961d648dfbf68a40744060c1d64f57ecbec98f4f5fb89f3a1b4213ccd10
+input=pressure_reference.pqi
+input_sha256=1cbf26d71ab8ac49a73688c59a3eb17cb7c79ae41f6e8c09af06459833593cc9
+selected_output=pressure_selected.tsv
+full_output=pressure_full_output.txt
+pressures_atm=1,100,500,1000
+temperature_C=25
+phases=Calcite,Gypsum,Barite,Celestite
+status=PREPARED_NOT_EXECUTED
+runner=RUN_PRESSURE_REFERENCE.cmd + run_pressure_reference.ps1
+rule=pressure_effect_in_ROSA_remains_disabled_until_external_golden_is_executed_and_verified
+source_REACTION_PRESSURE=https://water.usgs.gov/water-resources/software/PHREEQC/documentation/phreeqc3-html/phreeqc3-41.htm
+source_SOLUTION=https://water.usgs.gov/water-resources/software/PHREEQC/documentation/phreeqc3-html/phreeqc3-48.htm
+source_BASIC_PRESSURE=https://water.usgs.gov/water-resources/software/PHREEQC/documentation/phreeqc3-html/phreeqc3-61.htm

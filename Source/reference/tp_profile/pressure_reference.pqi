@@ -1,0 +1,38 @@
+TITLE ROSA T/P pressure benchmark preparation — PHREEQC 3.8.6-17100 / phreeqc.dat
+# PURPOSE: external numerical reference for pressure dependence only.
+# Do not copy these results into ROSA until this file has been executed by the
+# official PHREEQC engine and the selected output has been archived and verified.
+
+SOLUTION 1 Pressure reference water
+    temp      25
+    pressure  1
+    pH        7.0
+    units     mol/kgw
+    Na        1.0e-2
+    Cl        1.0e-2
+    Ca        1.0e-3
+    C(4)      2.0e-3
+    S(6)      1.0e-3
+    Ba        1.0e-5
+    Sr        1.0e-4
+END
+
+USE solution 1
+REACTION_PRESSURE 1
+    1.0 100.0 500.0 1000.0
+
+SELECTED_OUTPUT 1
+    -file pressure_selected.tsv
+    -reset false
+    -high_precision true
+    -pH true
+    -temperature true
+    -ionic_strength true
+    -saturation_indices Calcite Gypsum Barite Celestite
+
+USER_PUNCH 1
+    -headings pressure_atm temperature_C SI_Calcite_user SI_Gypsum_user SI_Barite_user SI_Celestite_user
+    -start
+    10 PUNCH PRESSURE, TC, SI("Calcite"), SI("Gypsum"), SI("Barite"), SI("Celestite")
+    -end
+END

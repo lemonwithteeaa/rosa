@@ -1,0 +1,28 @@
+TITLE ROSA mg/L to mol/kg water benchmark
+
+SOLUTION 1 NaCl_1_mol_per_L_water_1_kg
+    temp      25
+    pH        7
+    units     mg/L
+    density   1.05844277
+    Na        22989.77
+    Cl        35453.00
+
+SOLUTION 2 NaCl_0_5_mol_per_L_water_0_95_kg
+    temp      25
+    pH        7
+    units     mg/L
+    density   0.979221385
+    Na        11494.885
+    Cl        17726.500
+
+SELECTED_OUTPUT
+    -file molality_benchmark.tsv
+    -reset false
+    -high_precision true
+    -simulation true
+    -solution true
+USER_PUNCH
+    -headings water_kg Na_molal Cl_molal
+    10 PUNCH TOT("water"), TOT("Na"), TOT("Cl")
+END

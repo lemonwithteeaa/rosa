@@ -1,0 +1,29 @@
+SELECTED_OUTPUT
+ -file phreeqc_temperature_golden.tsv
+ -reset false
+ -high_precision true
+USER_PUNCH
+ -headings TemperatureC Calcite Gypsum Barite Celestite
+ -start
+ 10 PUNCH TC, LK_PHASE("Calcite"), LK_PHASE("Gypsum"), LK_PHASE("Barite"), LK_PHASE("Celestite")
+ -end
+SOLUTION 1
+ temp 0
+ pressure 1
+ pH 7
+END
+SOLUTION 2
+ temp 25
+ pressure 1
+ pH 7
+END
+SOLUTION 3
+ temp 60
+ pressure 1
+ pH 7
+END
+SOLUTION 4
+ temp 90
+ pressure 1
+ pH 7
+END

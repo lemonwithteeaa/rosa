@@ -1,0 +1,45 @@
+SELECTED_OUTPUT
+ -file carbon_forms_golden.tsv
+ -reset false
+ -high_precision true
+USER_PUNCH
+ -headings TemperatureC pH logCa logHCO3 logCO3 CalciteSI logCO2 logOH logWater
+ -start
+ 10 PUNCH TC, -LA("H+"), LA("Ca+2"), LA("HCO3-"), LA("CO3-2"), SI("Calcite"), LA("CO2"), LA("OH-"), LA("H2O")
+ -end
+SOLUTION 1
+ temp 0
+ pressure 1
+ pH 7
+ units mol/kgw
+ Ca 0.0001
+ C(4) 0.001
+ Cl 0.0002
+END
+SOLUTION 2
+ temp 25
+ pressure 1
+ pH 8
+ units mol/kgw
+ Ca 0.0001
+ C(4) 0.001
+ Cl 0.0002
+END
+SOLUTION 3
+ temp 60
+ pressure 1
+ pH 9
+ units mol/kgw
+ Ca 0.0001
+ C(4) 0.001
+ Cl 0.0002
+END
+SOLUTION 4
+ temp 90
+ pressure 1
+ pH 8
+ units mol/kgw
+ Ca 0.0001
+ C(4) 0.001
+ Cl 0.0002
+END
