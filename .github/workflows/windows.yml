@@ -1,0 +1,44 @@
+name: Windows validation
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: Source
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: Source/go.mod
+          cache: false
+
+      - name: Run Go tests
+        run: go test -count=1 ./...
+
+      - name: Audit saved CO2 references
+        run: python reference/co2_plan/verify_reference.py
+
+      - name: Build Windows GUI
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force ..\artifacts | Out-Null
+          go build -trimpath -ldflags "-H windowsgui" -o ..\artifacts\ROSA.exe .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rosa-windows-amd64
+          path: artifacts/ROSA.exe
