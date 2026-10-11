@@ -1,0 +1,13 @@
+{
+  "version": "7.3.11.824-RC",
+  "base": "7.3.11.823-RC",
+  "git_commit": "6706d53686b9f61852b9cde7f5db2bad9fde0483",
+  "git_tag": "7.3.11.824-RC",
+  "platform": "Windows amd64 GUI",
+  "scope": [
+    "NNO enlarged-window layout",
+    "axis captions",
+    "legend alignment"
+  ],
+  "native_gui_smoke": "not run"
+}

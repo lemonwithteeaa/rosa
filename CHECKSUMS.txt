@@ -1,0 +1,2 @@
+6b462558ee8c406d97baf0cc66a1cec8378d66b1206de64333e9e9113eee7ee5  Program/ROSA_7.3.11.824-RC.exe
+783dd8884fc24aafa975bf0eb9efd1558c0484c5c2362820240a7ec705ab0e60  Tests/ROSA_7.3.11.824-RC_tests_windows.exe
