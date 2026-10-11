@@ -1,0 +1,56 @@
+from pathlib import Path
+
+root = Path(__file__).resolve().parent
+main = (root / 'main.go').read_text(encoding='utf-8')
+implementation = (root / 'methods_implementation.go').read_text(encoding='utf-8')
+reference = (root / 'methods_reference_dialog.go').read_text(encoding='utf-8')
+
+checks = {
+    'version 638': 'const appBuildVersion = "7.3.11.638-RC"' in main,
+    'expanded implementation editor': ', 1120, 820,' in implementation,
+    'program header palette': all(x in implementation for x in ['methodImplementationHeaderBand', 'brushNav', 'methodImplementationAccent', 'brushHeader']),
+    'editable dropdown parameters': '"COMBOBOX"' in implementation and 'CBS_DROPDOWN' in implementation,
+    'old clipped fields removed': 'ES_MULTILINE|ES_AUTOVSCROLL|WS_VSCROLL, 270' not in implementation,
+    'context choice catalogs': 'methodImplementationFieldOptions' in implementation and all(x in implementation for x in ['case "basis":', 'case "point":', 'case "periodicity":', 'case "control":']),
+    'measurement unit follows dosage basis': 'field("unit", "Единица измерения", "гр/м³")' in implementation and implementation.index('field("basis", "База дозирования"') < implementation.index('field("unit", "Единица измерения"') < implementation.index('field("rate", "Концентрация / расход"'),
+    'measurement unit dropdown values': all(x in implementation for x in ['"гр/м³"', '"гр/тн"', '"тн"', '"м³"']),
+    'seven dosage fields supported': 'methodsImplementationFieldCount         = 7' in implementation,
+    'visible visual hierarchy': all(x in implementation for x in ['РЕАГЕНТ И ДОЗИРОВАНИЕ', 'ВВОД И ПЕРИОДИЧНОСТЬ', 'КОНТРОЛЬ РЕЗУЛЬТАТА', 'methodImplementationNoteBand']),
+    'white parameters card with red accent': all(x in implementation for x in ['methodImplementationFieldsPanel', 'methodImplementationFieldsAccent', 'return uintptr(brushWhite)', 'return uintptr(brushHeader)']),
+    'branded owner-drawn actions': 'drawMethodImplementationButton' in implementation and implementation.count('BS_OWNERDRAW') >= 5,
+    'primary actions use brand colors': all(x in implementation for x in ['case methodsImplementationEditorChooseScheme:', 'fill = brushNav', 'case methodsImplementationEditorSave:', 'fill = brushHeader']),
+    'unit is a strict dropdown': 'f.Key == "unit"' in implementation and 'CBS_DROPDOWNLIST' in implementation and 'CB_SETCURSEL' in implementation,
+    'scheme chooser has branded header': all(x in implementation for x in ['methodImplementationSchemeChooserHeader', 'methodImplementationSchemeChooserAccent', 'ВЫБОР СХЕМЫ ХИМИЗАЦИИ']),
+    'scheme chooser has separate list and detail headings': all(x in implementation for x in ['СОХРАНЁННЫЕ СХЕМЫ', 'СОСТАВ ВЫБРАННОЙ СХЕМЫ']),
+    'scheme chooser is expanded and unclipped': ', 1040, 700,' in implementation and 'RichEdit20W' in implementation,
+    'scheme chooser actions are branded': 'methodsImplementationSchemeApply, methodsImplementationSchemeCancel' in implementation and 'BS_OWNERDRAW' in implementation,
+    'reference shows saved scheme count': 'СОХРАНЁННЫЕ СХЕМЫ · %d' in reference,
+    'scheme card has explicit hierarchy': all(x in implementation for x in ['СХЕМА ХИМИЗАЦИИ\\r\\n', 'ПАРАМЕТРЫ\\r\\n', 'Тип реализации:']),
+    'scheme rows are two-line cards': 'drawMethodChemicalSchemeListItem' in implementation and all(x in implementation for x in ['titleRect := RECT', 'metaRect := RECT', 'methodsTypeCompact']),
+    'scheme cards show key dosage data': all(x in implementation for x in ['methodChemicalSchemeFieldValue(scheme, "reagent")', 'methodChemicalSchemeFieldValue(scheme, "rate")', 'methodChemicalSchemeFieldValue(scheme, "unit")', 'methodChemicalSchemeFieldValue(scheme, "basis")']),
+    'scheme cards use brand selection': all(x in implementation for x in ['fill = brushNav', 'accent := RECT', 'brushHeader']),
+    'chooser scheme list is owner drawn': 'LBS_OWNERDRAWFIXED|LBS_HASSTRINGS' in implementation and 'LB_SETITEMHEIGHT' in implementation,
+    'reference scheme list is owner drawn': 'LBS_OWNERDRAWFIXED|LBS_HASSTRINGS' in reference and 'drawMethodChemicalSchemeListItem(di, methodsReferenceCurrentSchemes)' in reference,
+    'persistent full chemical schemes': all(x in implementation for x in ['method_chemical_schemes.json', 'MethodChemicalScheme', 'saveMethodChemicalScheme', 'СОХРАНИТЬ КАК НОВУЮ']),
+    'scheme chooser applies all fields': all(x in implementation for x in ['ВЫБРАТЬ ГОТОВУЮ СХЕМУ', 'compatibleMethodChemicalSchemes', 'applyMethodChemicalScheme']),
+    'missing scheme guidance': 'Заполните параметры вручную и сохраните всю схему в справочник' in implementation,
+    'stored implementation reagents are reused': 'ensureMethodImplementationRecordsLoaded()' in implementation and 'field.Key == "reagent"' in implementation,
+    'manual changes stay audited': 'appendMethodImplementationAudit' in implementation,
+    'reference has full schemes subsection': all(x in reference for x in ['methodsReferenceTabReagents', '"РЕАГЕНТЫ"', 'СОХРАНЁННЫЕ СХЕМЫ ХИМИЗАЦИИ', 'ПОЛНАЯ СХЕМА ХИМИЗАЦИИ']),
+    'exact scheme duplicate warning': 'схема химизации с такой совокупностью параметров уже существует. Дублирование не выполнено' in implementation and 'MB_ICONWARNING' in implementation,
+    'reference shows scheme card': 'methodChemicalSchemeDetails(methodsReferenceCurrentSchemes[i])' in reference,
+    'single reagent add removed from reference': 'saveMethodReagent(value)' not in reference,
+    'three separate parameter groups': 'methodImplementationGroupPanels' in implementation and 'groupRects := [3][4]int32' in implementation,
+    'two-column field grid': all(x in implementation for x in ['methodImplementationEditorSlot', 'int32(slot%2)*518', 'width = 492']),
+    'object badge in header': 'methodImplementationObjectBadge' in implementation and 'ОБЪЕКТ · ' in implementation,
+    'dedicated reagent reference card': all(x in implementation for x in ['methodImplementationReferencePanel', 'РЕАГЕНТЫ И СПРАВОЧНИК СХЕМ', 'methodImplementationReagentSummary']),
+    'quiet action footer': all(x in implementation for x in ['СОХРАНИТЬ ПАРАМЕТРЫ', 'ВОССТАНОВИТЬ ПРЕДЛОЖЕННЫЕ', 'methodImplementationBottomRule']),
+    'single day abbreviation period': 'this prevents "сут.."' in (root / 'methods_workflow.go').read_text(encoding='utf-8'),
+    'dosage units follow basis': all(x in implementation for x in ['methodImplementationUnitOptionsForBasis', 'refreshMethodImplementationUnitCombo', 'strings.Contains(basis, "нефт")']),
+    'manual scheme status': 'изменено вручную: %d' in implementation,
+}
+
+for name, ok in checks.items():
+    print(('PASS' if ok else 'FAIL') + ': ' + name)
+print(f'{sum(checks.values())}/{len(checks)} PASS')
+raise SystemExit(0 if all(checks.values()) else 1)
