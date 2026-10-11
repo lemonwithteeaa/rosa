@@ -1,0 +1,14 @@
+{
+  "reference_version": "7.3.11.444-RC",
+  "reference_exe_sha256": "c7b606a1e1620ae063afcf55f73d7cb592549ac64a3385813b377d807a283b46",
+  "blocks": {
+    "LAYOUT": "1bcddf16a6cdfe46dc79c442cdf313c9fea9aa1691706f0c9f97343fc8263cbb",
+    "DRAW": "ae5a46a7ee4c3ba950fca2d245e64da5ed725eef2c95789c50a431e45563beaa",
+    "CREATE": "a635a71d31c7e3c02141ca659eb34a919dd2409d93fc59539d2f0925f64ced11"
+  },
+  "assets": {
+    "ROSA_app_icon_transparent.png": "c63a3b54ea03f58d135aedb5d6490571db22ad016527c8b784eb094c53b9d99a",
+    "LUKOIL_logo_cyr_network.png": "0fae02ddeb5196a4675bb32607d23b13b372288d77592887f162fc293a56836f",
+    "login_background_oilfield_v1.png": "6ee09ab9c44ada6d51e8c6a71e951c77d708d447eac9029febf061d3469028b3"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "release": "7.3.11.536-RC-NATIVE-EXCEL-LINE-CHARTS",
+  "blocks": {
+    "LAYOUT": "1bcddf16a6cdfe46dc79c442cdf313c9fea9aa1691706f0c9f97343fc8263cbb",
+    "DRAW": "ae5a46a7ee4c3ba950fca2d245e64da5ed725eef2c95789c50a431e45563beaa",
+    "CREATE": "c7e69c890468324580aa0fd77487b5ca1b09181b80f3c14f1a0664eb6083ebce"
+  },
+  "assets": {
+    "ROSA_app_icon_transparent.png": "c63a3b54ea03f58d135aedb5d6490571db22ad016527c8b784eb094c53b9d99a",
+    "LUKOIL_logo_cyr_network.png": "0fae02ddeb5196a4675bb32607d23b13b372288d77592887f162fc293a56836f",
+    "login_background_oilfield_v1.png": "6ee09ab9c44ada6d51e8c6a71e951c77d708d447eac9029febf061d3469028b3"
+  },
+  "exe_sha256": "0c1d25bf3468ca24c103ec181b8aa9c8240a32c7ee60e3f7d37a9f0f56aafcf9"
+}
