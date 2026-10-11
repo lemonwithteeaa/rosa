@@ -1,0 +1,3 @@
+f9bb5bbf6135fcf363282333adc6cc3f37ad000f1c306357378f5d6a61d9e2ba  /mnt/data/rosa583_work/РОСА_7.3.11.583-RC/Windows_x64/РОСА_7.3.11.583-RC.exe
+514b6a17e17fd25d6dfbb255433e76a49460ccd16b52717a05a8c3099865b225  /mnt/data/rosa583_work/РОСА_7.3.11.583-RC/Тесты/rc583_tests_windows.exe
+b764747952bb14f9a0737518354ed59dad6d9a3b423a0f1019277ceeabe1bc0a  /mnt/data/rosa583_work/РОСА_7.3.11.583-RC/ПРОМТ_ПРОДОЛЖЕНИЯ_РОСА_7.3.11.583-RC.txt

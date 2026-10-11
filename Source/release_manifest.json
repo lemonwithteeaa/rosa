@@ -1,0 +1,28 @@
+{
+  "version": "7.3.11.796-RC",
+  "base": "7.3.11.795-RC",
+  "history_baseline": "7.3.11.744-RC",
+  "source_git_tag": "7.3.11.796-RC",
+  "target": "Windows x64 GUI",
+  "compiler": "Go 1.27.1 linux/amd64",
+  "exe": "ROSA_7.3.11.796-RC.exe",
+  "exe_sha256": "de805d22435a6384f77308f21f5bea0564f5b89db10a953f73383fb76031ad2f",
+  "test_binary": "ROSA_7.3.11.796-RC_tests_windows.exe",
+  "test_binary_sha256": "805304e9bafb05cd620778e3a0407215c9c21a4a842dd15bf2eda3ec582b0571",
+  "training_workbooks": "ROSA_Учебный_набор_20_скважин_796-RC.zip",
+  "training_workbooks_sha256": "9865662a133709aa8ac22754e77031a3c515afef49a06d68a1a658899d0f635a",
+  "icon_sha256": "24a675ad654b558ef9391561606be8aac8c72d33ef34fd5c5f90cfc9c21e59ad",
+  "runtime_icon": "embedded approved ICO; resource verified",
+  "release_content": {
+    "full": "Windows app and test binary, full source tree, full local Git history, documentation, resources, training workbooks and checksums"
+  },
+  "qa": {
+    "windows_crossbuild": "PASS",
+    "windows_test_compile": "PASS (not executed)",
+    "wm_command_id_bounds": "PASS",
+    "notice_settings_layout": "PASS (10 checklist rows fit)",
+    "training_workbook_separation": "PASS",
+    "native_windows_gui_smoke": "NOT RUN; Windows runtime unavailable"
+  },
+  "database_note": "No standalone SQLite database was present in the source workspace; training records are supplied in training_corpus.json and demo_seed.go."
+}
