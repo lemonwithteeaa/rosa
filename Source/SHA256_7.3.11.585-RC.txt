@@ -1,4 +1,0 @@
-b51e00c09c114109c572cc368337381b34dae860c3515115fd147a79adb2a7f8  Windows_x64/РОСА_7.3.11.585-RC.exe
-d63b3dea920b18114fd62da4ddaa92cad91979663e732e523242909d06ac244a  Исходники/OF_Model_icon_round.ico
-741a6b2630994cfa7d1696c5c278648cb123decdd651d180545e1ebd5d705c3c  Исходники/methods_effect_model.go
-e5e0b11fc7c584580e5945c55b71f1ec19d1217fac5e9b22f2ab3781fef3fd2c  ПРОМТ_ПРОДОЛЖЕНИЯ_РОСА_7.3.11.585-RC.txt
