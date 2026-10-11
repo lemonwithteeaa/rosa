@@ -8,7 +8,6 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
@@ -21,6 +20,8 @@ import (
 	"time"
 	"unicode/utf16"
 	"unsafe"
+
+	"ofmodel/internal/authcrypto"
 )
 
 const (
@@ -275,35 +276,8 @@ func saveAuthStore(st AuthStore) error {
 	return atomicWriteFile(accountsPath(), b, 0600)
 }
 
-// pbkdf2SHA256 is implemented locally to keep the offline Windows build self-contained.
-func pbkdf2SHA256(password, salt []byte, iterations, keyLen int) []byte {
-	if iterations < 1 {
-		iterations = 1
-	}
-	hLen := 32
-	blocks := (keyLen + hLen - 1) / hLen
-	out := make([]byte, 0, blocks*hLen)
-	for block := 1; block <= blocks; block++ {
-		mac := hmac.New(sha256.New, password)
-		mac.Write(salt)
-		mac.Write([]byte{byte(block >> 24), byte(block >> 16), byte(block >> 8), byte(block)})
-		u := mac.Sum(nil)
-		t := append([]byte(nil), u...)
-		for i := 1; i < iterations; i++ {
-			mac = hmac.New(sha256.New, password)
-			mac.Write(u)
-			u = mac.Sum(nil)
-			for j := range t {
-				t[j] ^= u[j]
-			}
-		}
-		out = append(out, t...)
-	}
-	return out[:keyLen]
-}
-
-func derivePasswordKey(password string, salt []byte, iterations int) []byte {
-	return pbkdf2SHA256([]byte(password), salt, iterations, 32)
+func derivePasswordKey(password string, salt []byte, iterations int) ([]byte, error) {
+	return authcrypto.DeriveKey(password, salt, iterations, 32)
 }
 
 func secureEqualB64(a string, b []byte) bool {
@@ -334,8 +308,11 @@ func setAccountSecurityAnswer(accountID, answer string) error {
 		if _, err := rand.Read(salt); err != nil {
 			return err
 		}
-		const iterations = 180000
-		key := derivePasswordKey(answer, salt, iterations)
+		const iterations = authcrypto.CurrentIterations
+		key, err := derivePasswordKey(answer, salt, iterations)
+		if err != nil {
+			return err
+		}
 		st.Accounts[i].SecurityQuestion = authSecurityQuestion
 		st.Accounts[i].SecurityAnswerSalt = base64.StdEncoding.EncodeToString(salt)
 		st.Accounts[i].SecurityAnswerHash = base64.StdEncoding.EncodeToString(key)
@@ -356,11 +333,14 @@ func verifyAccountSecurityAnswer(a LocalAccount, answer string) bool {
 	if err != nil {
 		return false
 	}
-	it := a.SecurityIterations
-	if it < 10000 {
-		it = 180000
+	it, err := authcrypto.StoredIterations(a.SecurityIterations)
+	if err != nil {
+		return false
 	}
-	key := derivePasswordKey(normalizeSecurityAnswer(answer), salt, it)
+	key, err := derivePasswordKey(normalizeSecurityAnswer(answer), salt, it)
+	if err != nil {
+		return false
+	}
 	ok := secureEqualB64(a.SecurityAnswerHash, key)
 	for i := range key {
 		key[i] = 0
@@ -551,9 +531,16 @@ func createLocalAccount(login, password string, first bool) (LocalAccount, error
 	if _, err := rand.Read(salt); err != nil {
 		return LocalAccount{}, err
 	}
-	const iterations = 180000
-	key := derivePasswordKey(password, salt, iterations)
-	var err error
+	const iterations = authcrypto.CurrentIterations
+	key, err := derivePasswordKey(password, salt, iterations)
+	if err != nil {
+		return LocalAccount{}, err
+	}
+	defer func() {
+		for i := range key {
+			key[i] = 0
+		}
+	}()
 	idBase := sanitizeAccountID(login)
 	id := idBase
 	for n := 2; ; n++ {
@@ -723,11 +710,14 @@ func authenticateLocal(login, password string) (*UserSession, error) {
 		if err != nil {
 			return nil, fmt.Errorf("повреждены данные учётной записи")
 		}
-		it := a.Iterations
-		if it < 10000 {
-			it = 180000
+		it, err := authcrypto.StoredIterations(a.Iterations)
+		if err != nil {
+			return nil, fmt.Errorf("повреждены параметры защиты учётной записи: %w", err)
 		}
-		key := derivePasswordKey(password, salt, it)
+		key, err := derivePasswordKey(password, salt, it)
+		if err != nil {
+			return nil, fmt.Errorf("не удалось проверить пароль: %w", err)
+		}
 		if !secureEqualB64(a.PasswordHash, key) {
 			for i := range key {
 				key[i] = 0
