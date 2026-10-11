@@ -1,0 +1,45 @@
+SELECTED_OUTPUT
+ -file complex_golden.tsv
+ -reset false
+ -high_precision true
+USER_PUNCH
+ -headings pH TotalCa TotalC Ca HCO3 CO3 CO2 CaCO3 CaHCO3 H OH I SI logWater
+ -start
+ 10 PUNCH -LA("H+"), TOT("Ca"), TOT("C"), MOL("Ca+2"), MOL("HCO3-"), MOL("CO3-2"), MOL("CO2"), MOL("CaCO3"), MOL("CaHCO3+"), MOL("H+"), MOL("OH-"), MU, SI("Calcite"), LA("H2O")
+ -end
+SOLUTION 1
+ temp 25
+ pH 7
+ units mol/kgw
+ Ca 0.0001
+ C 0.001
+ Na 0.001
+ Cl 0.001
+END
+SOLUTION 2
+ temp 25
+ pH 8
+ units mol/kgw
+ Ca 0.001
+ C 0.001
+ Na 0.001
+ Cl 0.001
+END
+SOLUTION 3
+ temp 25
+ pH 9
+ units mol/kgw
+ Ca 0.001
+ C 0.01
+ Na 0.001
+ Cl 0.001
+END
+SOLUTION 4
+ temp 25
+ pH 10
+ units mol/kgw
+ Ca 0.01
+ C 0.001
+ Na 0.001
+ Cl 0.001
+END

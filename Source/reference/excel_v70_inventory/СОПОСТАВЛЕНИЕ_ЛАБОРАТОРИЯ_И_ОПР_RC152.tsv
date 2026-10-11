@@ -1,0 +1,63 @@
+﻿Строка Excel	Показатель Excel	Единица Excel	Вкладка РОСА	Ключ РОСА	Каноническая единица	Статус
+5	А — Парафины	% масс.	aspo	paraffins	% масс.	mapped
+6	А — Смолы	% масс.	aspo	resins	% масс.	mapped
+7	А — Асфальтены	% масс.	aspo	asphaltenes	% масс.	mapped
+8	А / М — * Мехпримеси в отложениях	% масс.	aspo	mechanical	% масс.	mapped
+9	С — * Минеральные соли	% масс.	solids	scale_fraction	% масс.	mapped
+27	Общая минерализация (TDS)	мг/л	scale	mineralization	мг/л	mapped_unit_convert
+28	pH	ед. pH	scale	ph	ед.	mapped
+29	Температура пробы / процесса	°C	scale	sample_temp	°C	mapped
+30	* Кальций Ca²⁺	мг/л	scale	ca	мг/л	mapped
+31	* Магний Mg²⁺	мг/л	scale	mg	мг/л	mapped
+32	* Натрий + калий Na⁺+K⁺	мг/л	scale	na_k	мг/л	mapped
+33	* Хлорид Cl⁻	мг/л	scale	cl	мг/л	mapped_shared_with_corrosion
+34	* Сульфат SO₄²⁻	мг/л	scale	so4	мг/л	mapped
+35	* Карбонат CO₃²⁻	мг/л (расч.)	scale	co3	мг/л	mapped_or_calculated
+36	* Гидрокарбонат HCO₃⁻	мг/л	scale	hco3	мг/л	mapped
+37	* Железо Fe²⁺	мг/л	corrosion	fe2	мг/л	mapped
+38	* Железо Fe³⁺	мг/л	corrosion	fe3	мг/л	mapped
+39	* Растворённый CO₂	мг/л	corrosion	co2	мг/л	mapped_shared
+40	* Растворённый H₂S	мг/л	corrosion	h2s	мг/л	mapped_shared
+86	Температура пласта	°C	scale	formation_temp	°C	mapped_context
+87	* Давление пласта	МПа	scale	formation_pressure	МПа	mapped_context
+88	Температура на приёме насоса	°C	scale	pump_temp	°C	mapped_context
+89	* Давление на приёме насоса	МПа	scale	pump_pressure	МПа	mapped_context
+90	Минимальная температура по стволу	°C	scale	profile_temp_min	°C	mapped_context
+91	Максимальная температура по стволу	°C	scale	profile_temp_max	°C	mapped_context
+92	* Минимальное давление по стволу	МПа	scale	profile_pressure_min	МПа	mapped_context
+93	* Максимальное давление по стволу	МПа	scale	profile_pressure_max	МПа	mapped_context
+94	Температура на устье	°C	scale	wellhead_temp	°C	mapped_context
+95	* Давление на устье	МПа	scale	wellhead_pressure	МПа	mapped_context
+99	Температура начала кристаллизации парафинов (ТНКП; WAT)	°C	aspo	wax_onset	°C	mapped
+110	* Железо общее или растворённое	мг/л	corrosion	iron_total	мг/л	mapped
+111	* Окислительно-восстановительный потенциал	мВ	corrosion	orp	мВ	mapped
+112	* Сульфатвосстанавливающие бактерии: посев / наиболее вероятное число	по протоколу	microbiology	srb	по протоколу	mapped
+113	* Аденозинтрифосфат (АТФ), количественная полимеразная цепная реакция (ПЦР) или анализ биоплёнки	по протоколу	microbiology	qpcr_srb	по протоколу	partial_semantic_mapping
+144	* H₂S в газовой фазе	% об.	corrosion	h2s_gas	% об.	mapped_shared
+145	* Полное абсолютное давление	МПа abs	corrosion	gas_absolute_pressure	МПа abs	mapped
+147	* Растворённый H₂S	мг/л	corrosion	h2s	мг/л	mapped_shared
+148	* Марка и состояние материала	текст	corrosion	equipment_material	текст	mapped
+149	* Предел текучести материала	МПа	corrosion	material_yield_strength	МПа	mapped
+150	* Твёрдость основного металла	HRC/HV/HB	corrosion	material_hardness_base	HRC/HV/HB	mapped
+151	* Твёрдость сварного шва / ЗТВ	HV/HRC	corrosion	material_hardness_weld	HV/HRC	mapped
+152	* Рабочие и остаточные напряжения	текст	corrosion	working_stresses	текст	mapped
+153	* Испытание SSC	текст	corrosion	ssc_test	текст	mapped
+154	* Испытание HIC	текст	corrosion	hic_test	текст	mapped
+155	* Водородопроницаемость / диффузионно-подвижный водород	по протоколу	corrosion	hydrogen_permeation	по протоколу	mapped
+156	* Предварительный вывод по «зоне»	текст	corrosion	material_zone_conclusion	текст	mapped
+163	* CO₂ в газовой фазе	% об.	corrosion	co2_gas	% об.	mapped_shared
+164	* Полное абсолютное давление	МПа abs	corrosion	gas_absolute_pressure	МПа abs	mapped_shared
+166	* Растворённый CO₂	мг/л	corrosion	co2	мг/л	mapped_shared
+167	* Температура среды	°C	corrosion	sample_temp	°C	mapped_shared
+168	* pH	ед. pH	corrosion	ph	ед.	mapped_shared
+169	* Хлориды Cl⁻	мг/л	corrosion	chlorides	мг/л	mapped_shared
+171	* Обводнённость	%	aspo	water	%	not_equivalent_use_tech_watercut_instead
+172	* Фактическая скорость коррозии	мм/год	corrosion	corrosion_rate	мм/год	mapped
+180	* Растворённый O₂	мг/л	corrosion	o2	мг/л	mapped
+181	* Температура среды	°C	corrosion	sample_temp	°C	mapped_shared
+182	* pH	ед. pH	corrosion	ph	ед.	mapped_shared
+183	* Хлориды Cl⁻	мг/л	corrosion	chlorides	мг/л	mapped_shared
+184	* Общая минерализация	мг/л	corrosion	mineralization	мг/л	mapped_unit_convert
+186	* Fe²⁺ + Fe³⁺	мг/л	corrosion	iron_total	мг/л	mapped_or_sum_fe2_fe3
+187	* Фактическая скорость коррозии	мм/год	corrosion	corrosion_rate	мм/год	mapped
+188	* Скорость потока / циркуляции	м/с	corrosion	flow_velocity	м/с	mapped

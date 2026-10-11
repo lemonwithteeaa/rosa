@@ -1,0 +1,26 @@
+USGS source commit b0b3be767158ccc3322d2c816625cf470045e67e
+src/model.cpp, lines 2590-2612
+
+		if (PR /*&& gas_unknown->gas_phase->total_p > 1 */ && iterations > 0)
+		{
+			calc_PR(phase_ptrs, gas_phase_ptr->Get_total_p(), tk_x, 0);
+		}
+	} else
+	{
+		if (PR)
+		{
+			if (gas_phase_ptr->Get_total_moles() > 0)
+			{
+				V_m = gas_phase_ptr->Get_volume() / gas_phase_ptr->Get_total_moles();
+				if (V_m < 0.016)
+				{
+						V_m = 0.016;
+				} else if (V_m > 1e4)
+				{
+					V_m = 1e4;
+				}
+				if (V_m < 0.02)
+					V_m = (8. * gas_phase_ptr->Get_v_m() + V_m) / 9;
+				else if (V_m < 0.03)
+					V_m = (6. * gas_phase_ptr->Get_v_m() + V_m) / 7;
+				else if (V_m < 0.05)

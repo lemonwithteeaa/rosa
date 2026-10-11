@@ -1,0 +1,31 @@
+# CO2 reference input; execution status recorded in RUN_MANIFEST.json
+SOLUTION 1 Initial aqueous sample
+ temp 25
+ units mol/kgw
+ pH 7
+ Na 0.01
+ Cl 0.01
+ -water 1
+SELECTED_OUTPUT 1
+ -file selected.tsv
+ -high_precision true
+ -pH true
+ -ionic_strength true
+ -totals C(4) Na Cl
+ -molalities CO2 HCO3- CO3-2
+ -gases CO2(g)
+USER_PUNCH 1
+ -headings water_kg carbon_water_mol co2_gas_mol total_carbon_mol water_activity co2_phase_si co2_partial_atm co2_phi reservoir_stock_mol dissolved_co2_activity
+ -start
+ 10 PUNCH TOT("water"), TOTMOLE("C"), GAS("CO2(g)"), TOTMOLE("C")+GAS("CO2(g)"), ACT("H2O"), SI("CO2(g)"), PR_P("CO2(g)"), PR_PHI("CO2(g)"), EQUI("CO2(g)"), ACT("CO2")
+ -end
+GAS_PHASE 1
+ -fixed_volume
+ -volume 10
+ -temperature 25
+ CO2(g) 0.01
+END
+DUMP
+ -file initial_gas.dump
+ -gas_phase 1
+END

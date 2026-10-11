@@ -1,0 +1,17 @@
+СОПОСТАВЛЕНИЕ ЛАБОРАТОРНЫХ ПОЛЕЙ — RC152
+Строк сопоставления: 62
+mapped: 32
+mapped_context: 10
+mapped_or_calculated: 1
+mapped_or_sum_fe2_fe3: 1
+mapped_shared: 13
+mapped_shared_with_corrosion: 1
+mapped_unit_convert: 2
+not_equivalent_use_tech_watercut_instead: 1
+partial_semantic_mapping: 1
+
+Важно:
+- mapped_unit_convert: совместимые физические величины, но отображаемая единица может отличаться; пересчёт только через каноническую единицу.
+- mapped_shared: одно каноническое значение используется несколькими вкладками.
+- вода в лабораторной пробе нефти и обводнённость продукции неэквивалентны и не должны автоматически подменять друг друга.
+- partial_semantic_mapping требует ручной проверки метода/смысла, даже если близкое поле РОСА существует.

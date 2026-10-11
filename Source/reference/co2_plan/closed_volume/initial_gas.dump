@@ -1,0 +1,29 @@
+GAS_PHASE_RAW                1 
+  # GAS_PHASE_MODIFY candidate identifiers #
+  -type                      1
+  -total_p                   0.01
+  -volume                    1
+  -component                 CO2(g)
+    # GAS_PHASE_MODIFY candidate identifiers #
+    -moles                   0.00040875144969231
+    # GAS_PHASE_MODIFY candidate identifiers with new_def=true #
+    -p_read                  0.01
+    # GasComp workspace variables #
+    -initial_moles           0
+    -p                       0.01
+    -phi                     0.99994463920402
+    -f                       0.0099994463920402
+  # GAS_PHASE_MODIFY candidate identifiers with new_def=true #
+  -new_def                   0
+  -solution_equilibria       0
+  -n_solution                -999
+  -temperature               298.15
+  # GasPhase workspace variables #
+  -total_moles               0.00040875144969231
+  -v_m                       2446.4745036446
+  -pr_in                     1
+  -totals                    
+USE mix none
+USE reaction none
+USE reaction_temperature none
+USE reaction_pressure none

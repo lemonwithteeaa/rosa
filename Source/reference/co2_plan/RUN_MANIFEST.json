@@ -1,0 +1,17 @@
+{
+  "status": "executed",
+  "engine": "PHREEQC 3.8.9",
+  "source_commit": "b0b3be767158ccc3322d2c816625cf470045e67e",
+  "source_url": "https://github.com/usgs-coupled/phreeqc3",
+  "source_archive_sha256": "47f1d4187ea302cb504c772409ea469aa7df1e2d338bec186c3a99d75998fbaa",
+  "database_sha256": "5b80d45c989cd1db7aab485e198321ba550d5902be8097c8be26d85ba03da278",
+  "engine_linux_sha256": "23036d3c35e4d0fbe3050753b81056a8e2ff0790d01f7afe9b2e6372159a63d0",
+  "inputs": {
+    "external_reservoir": "c3e8ccaa7826a639162556a9727e02def72108cb7caa06aaa0d9e04b8c996f1e",
+    "closed_volume": "fecaae328f2ada55235b2af074a682142fd07055f5bdac63b3945398740d1102",
+    "insufficient_reservoir": "ad805b5780e9f8bc10baa5dfb86b4a9807d38bccb63f26cb21f3a271814a94d1",
+    "closed_small_volume": "7347bd240ca650990e9ff0ee87ea48326001ec137691d0c4f3e99cc0ed93539f",
+    "closed_large_volume": "bc31aa3f82c07f2a5960b2fd4a3b5d67b15b682ce4c7e974e73062089f2644bc"
+  },
+  "scope": "External reference only; no ROSA gas solver implemented."
+}

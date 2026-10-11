@@ -1,0 +1,62 @@
+# DERIVED TEST DATABASE ONLY: reduced carbonate system, two calcium complexes.
+# Reaction analytical coefficients from USGS PHREEQC 3.8.6-17100 phreeqc.dat.
+# Original database remains unchanged in ../temperature/phreeqc.dat.
+# Omission of gamma parameters selects PHREEQC default Davies.
+SOLUTION_MASTER_SPECIES
+H H+ -1 H 1.008
+H(1) H+ -1 H
+H(0) H2 0 H
+E e- 1 0 0
+O H2O 0 O 16
+O(-2) H2O 0 0
+O(0) O2 0 O
+Ca Ca+2 0 Ca 40.078
+Mg Mg+2 0 Mg 24.305
+Na Na+ 0 Na 22.990
+K K+ 0 K 39.0983
+Cl Cl- 0 Cl 35.45
+S SO4-2 0 SO4 32.064
+C CO3-2 2 HCO3 12.0111
+Alkalinity CO3-2 1 Ca0.5(CO3)0.5 50.04345
+SOLUTION_SPECIES
+H+ = H+
+ log_k 0
+e- = e-
+ log_k 0
+H2O = H2O
+ log_k 0
+Ca+2 = Ca+2
+ log_k 0
+Mg+2 = Mg+2
+ log_k 0
+Na+ = Na+
+ log_k 0
+K+ = K+
+ log_k 0
+Cl- = Cl-
+ log_k 0
+SO4-2 = SO4-2
+ log_k 0
+CO3-2 = CO3-2
+ log_k 0
+CO3-2 + H+ = HCO3-
+ -analytic 107.8871 0.03252849 -5151.79 -38.92561 563713.9
+CO3-2 + 2 H+ = CO2 + H2O
+ -analytic 464.1965 0.09344813 -26986.16 -165.75951 2248628.9
+ -gamma 0 0
+H2O = OH- + H+
+ -analytic 293.29227 0.1360833 -10576.913 -123.73158 0 -6.996455e-5
+2 H2O = O2 + 4 H+ + 4 e-
+ log_k -86.08
+2 H+ + 2 e- = H2
+ log_k -3.15
+Ca+2 + CO3-2 = CaCO3
+ -analytic -1228.732 -0.29944 35512.75 485.818
+ -gamma 0 0
+Ca+2 + CO3-2 + H+ = CaHCO3+
+ -analytic -6.009 0.03377 2044
+PHASES
+Calcite
+ CaCO3 = Ca+2 + CO3-2
+ -analytic 17.118 -0.046528 -3496
+END

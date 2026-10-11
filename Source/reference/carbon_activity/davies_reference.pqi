@@ -1,0 +1,45 @@
+SELECTED_OUTPUT
+ -file davies_golden.tsv
+ -reset false
+ -high_precision true
+USER_PUNCH
+ -headings pH Ca Mg Na K Cl SO4 HCO3 CO3 CO2 H OH I SI logWater logGammaCO2
+ -start
+ 10 PUNCH -LA("H+"), MOL("Ca+2"), MOL("Mg+2"), MOL("Na+"), MOL("K+"), MOL("Cl-"), MOL("SO4-2"), MOL("HCO3-"), MOL("CO3-2"), MOL("CO2"), MOL("H+"), MOL("OH-"), MU, SI("Calcite"), LA("H2O"), LA("CO2") - LM("CO2")
+ -end
+SOLUTION 1
+ temp 25
+ pH 8
+ units mol/kgw
+ Ca 0.0001
+ Mg 0.00005
+ Na 0.001
+ K 0.00001
+ Cl 0.001
+ S 0.00001
+ C 0.001
+END
+SOLUTION 2
+ temp 25
+ pH 9
+ units mol/kgw
+ Ca 0.0001
+ Mg 0.00005
+ Na 0.01
+ K 0.00001
+ Cl 0.01
+ S 0.00001
+ C 0.001
+END
+SOLUTION 3
+ temp 25
+ pH 7
+ units mol/kgw
+ Ca 0.0001
+ Mg 0.00005
+ Na 0.05
+ K 0.00001
+ Cl 0.05
+ S 0.00001
+ C 0.001
+END
