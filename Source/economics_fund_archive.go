@@ -178,7 +178,10 @@ func refreshEconomicsFundArchive() {
 	}
 }
 
-const economicsFundArchiveCloseID = 9758
+const (
+	economicsFundArchiveCloseID = 9758
+	economicsFundArchiveRestoreID = 14969
+)
 
 var (
 	economicsFundDialogDone        bool
@@ -190,6 +193,8 @@ var (
 	economicsFundDialogTitle       syscall.Handle
 	economicsFundDialogSubtitle    syscall.Handle
 	economicsFundDialogClose       syscall.Handle
+	economicsFundDialogRestore     syscall.Handle
+	economicsFundDialogSelected    int
 )
 
 func layoutEconomicsFundDialog(hwnd uintptr, w, h int32) {
@@ -208,6 +213,7 @@ func layoutEconomicsFundDialog(hwnd uintptr, w, h int32) {
 	setPos(economicsFundDialogDetailTitle, margin, detailTitleY, max32(100, w-margin*2), 28)
 	detailY := detailTitleY + 32
 	setPos(economicsFundDialogDetail, margin, detailY, max32(100, w-margin*2), max32(115, closeY-detailY-10))
+	setPos(economicsFundDialogRestore, margin, closeY, 250, 38)
 	setPos(economicsFundDialogClose, max32(margin, w-182), closeY, 160, 38)
 	layoutEconomicsFundArchiveColumns(w)
 }
@@ -249,6 +255,7 @@ func economicsFundDialogSelectScheme(index int) {
 	if economicsFundDialogDetail == 0 || index < 0 || index >= len(economicsFundDialogObject.Schemes) {
 		return
 	}
+	economicsFundDialogSelected = index
 	s := economicsFundDialogObject.Schemes[index]
 	methods := strings.Join(alternativeScenarioMethodsForCalculation(s), " + ")
 	if methods == "" {
@@ -296,6 +303,25 @@ func economicsFundDialogSelectScheme(index int) {
 	}
 }
 
+func economicsFundDialogApplySelected(hwnd uintptr) {
+	index := economicsFundDialogSelected
+	if index < 0 || index >= len(economicsFundDialogObject.Schemes) {
+		return
+	}
+	stored, err := restoreEconomicsFromArchive(economicsFundDialogObject.Schemes[index])
+	if err != nil {
+		msg("Предыдущие расчёты", err.Error(), MB_OK|MB_ICONWARNING)
+		return
+	}
+	if !stored {
+		// Old records have forecasts and CAPEX/OPEX but may lack the exact
+		// historical repair cost, horizon or inflation. Do not make them up.
+		msg("Предыдущие расчёты", "Прогноз и затраты перенесены. Полный снимок исходных параметров для этого старого расчёта не сохранён; проверьте оставшиеся поля.", MB_OK|MB_ICONINFORMATION)
+	}
+	economicsFundDialogDone = true
+	pDestroyWindowAuth.Call(hwnd)
+}
+
 func economicsFundArchiveWndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
 	switch message {
 	case WM_CREATE:
@@ -307,7 +333,7 @@ func economicsFundArchiveWndProc(hwnd uintptr, message uint32, wParam, lParam ui
 			pSendMessageW.Call(hwnd, WM_SETICON, ICON_SMALL, uintptr(hIconSmall))
 		}
 		economicsFundDialogTitle = modalCreate("STATIC", "ЭКОНОМИЧЕСКИЕ СХЕМЫ ОБЪЕКТА", WS_CHILD|WS_VISIBLE|SS_LEFT|SS_NOPREFIX, 22, 18, 1000, 32, parent, 0)
-		economicsFundDialogSubtitle = modalCreate("STATIC", readableObjectKey(economicsFundDialogObject.ObjectKey)+" · архив альтернатив А–Д · только просмотр · выберите строку для подробностей", WS_CHILD|WS_VISIBLE|SS_LEFT|SS_NOPREFIX, 22, 55, 1000, 44, parent, 0)
+		economicsFundDialogSubtitle = modalCreate("STATIC", readableObjectKey(economicsFundDialogObject.ObjectKey)+" · архив альтернатив А–Д · двойной щелчок по схеме — подставить данные при совпадении объекта", WS_CHILD|WS_VISIBLE|SS_LEFT|SS_NOPREFIX, 22, 55, 1000, 44, parent, 0)
 		economicsFundDialogDetailTitle = modalCreate("STATIC", "ВЫБЕРИТЕ МЕТОД ДЛЯ ПРОСМОТРА ЭКОНОМИКИ", WS_CHILD|WS_VISIBLE|SS_LEFT|SS_NOPREFIX, 22, 438, 1000, 28, parent, 0)
 		font, _, _ := pCreateFontW.Call(^uintptr(19-1), 0, 0, 0, 700, 1, 0, 0, 204, 0, 0, 5, 0, uintptr(unsafe.Pointer(p("Segoe UI"))))
 		economicsFundDialogAccentFont = syscall.Handle(font)
@@ -372,6 +398,7 @@ func economicsFundArchiveWndProc(hwnd uintptr, message uint32, wParam, lParam ui
 		if len(economicsFundDialogObject.Schemes) > 0 {
 			economicsFundDialogSelectScheme(0)
 		}
+		economicsFundDialogRestore = modalCreate("BUTTON", "Подставить прежний расчёт", WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_PUSHBUTTON, 22, 668, 250, 38, parent, economicsFundArchiveRestoreID)
 		economicsFundDialogClose = modalCreate("BUTTON", "Закрыть", WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_PUSHBUTTON, 850, 668, 160, 38, parent, economicsFundArchiveCloseID)
 		layoutEconomicsFundDialog(hwnd, 1160, 700)
 		return 0
@@ -425,10 +452,17 @@ func economicsFundArchiveWndProc(hwnd uintptr, message uint32, wParam, lParam ui
 					index = int(act.IItem)
 				}
 				economicsFundDialogSelectScheme(index)
+				if hdr.Code == NM_DBLCLK {
+					economicsFundDialogApplySelected(hwnd)
+				}
 				return 0
 			}
 		}
 	case WM_COMMAND:
+		if int(wParam&0xffff) == economicsFundArchiveRestoreID {
+			economicsFundDialogApplySelected(hwnd)
+			return 0
+		}
 		if int(wParam&0xffff) == economicsFundArchiveCloseID {
 			economicsFundDialogDone = true
 			pDestroyWindowAuth.Call(hwnd)
