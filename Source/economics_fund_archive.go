@@ -263,7 +263,7 @@ func economicsFundDetailsText(rows [][]string) string {
 		result.WriteString(strings.TrimSpace(row[0]))
 		if len(row) > 1 {
 			result.WriteString(":\r\n")
-			result.WriteString(strings.TrimSpace(row[1]))
+			result.WriteString(row[1])
 		}
 		result.WriteString("\r\n\r\n")
 	}
