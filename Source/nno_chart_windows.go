@@ -1069,6 +1069,15 @@ func nnoDistributionLegendRows(panel RECT) [4]RECT {
 	return rows
 }
 
+func nnoDistributionLegendLabels(panel RECT) [4]string {
+	// Full names are shown when the legend has the space for wrapped text;
+	// otherwise use equivalent compact terms without clipping at 125–150% DPI.
+	if panel.Bottom-panel.Top < 207 || panel.Right-panel.Left < 235 {
+		return [4]string{"Типичный диапазон", "Основные 50 %", "Медиана", "Средняя"}
+	}
+	return [4]string{"Диапазон типичных значений", "Основные 50 % значений", "Медианная наработка", "Средняя наработка"}
+}
+
 func nnoDistributionSelectionLabel(kind int, medianMode bool) string {
 	switch kind {
 	case nnoDistributionLower:
@@ -1099,13 +1108,7 @@ func nnoDrawDistributionLegend(hdc uintptr, rc, plot RECT) {
 	nnoChartPanelFill(hdc, panel, rgb(246, 249, 253))
 	nnoChartStroke(hdc, []POINT{{X: panel.Left, Y: panel.Top}, {X: panel.Right, Y: panel.Top}, {X: panel.Right, Y: panel.Bottom}, {X: panel.Left, Y: panel.Bottom}, {X: panel.Left, Y: panel.Top}}, rgb(214, 225, 236), 1, false)
 	nnoChartText(hdc, "ОБОЗНАЧЕНИЯ", RECT{Left: panel.Left + 6, Top: panel.Top + 3, Right: panel.Right - 6, Bottom: panel.Top + 24}, rgb(25, 65, 112), true, true)
-	labels := [4]string{"Диапазон типичных значений", "Основные 50 % значений", "Медианная наработка", "Средняя наработка"}
-	// A small on-screen graph can have fewer than 200 physical pixels after
-	// DPI scaling. Preserve the meaning with compact wording rather than
-	// clipping a third line of large text at the bottom of its legend row.
-	if panel.Bottom-panel.Top < 207 || panel.Right-panel.Left < 235 {
-		labels = [4]string{"Типичный диапазон", "Основные 50 %", "Медиана", "Средняя"}
-	}
+	labels := nnoDistributionLegendLabels(panel)
 	rows := nnoDistributionLegendRows(panel)
 	for i, row := range rows {
 		if row.Bottom-row.Top < 18 {
