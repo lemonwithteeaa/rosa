@@ -440,11 +440,13 @@ func refreshNNOFleetUI() {
 	nnoFleetMonthData, nnoFleetEventData = months, events
 	nnoFleetCycleSamples = nnoVerifiedCycleSamples()
 	nnoFleetSyntheticPreview = false
-	// The production journal intentionally filters out teaching rows. Inspect the
-	// untouched source history for an explicitly marked training dataset: using
-	// the filtered `events` made this branch unreachable after the RC806 split.
-	// Never replace nonempty real history with fabricated production results.
-	if len(nnoFleetCycleSamples) == 0 && len(events) == 0 && (nnoShouldUseSyntheticPreview(failureEvents) || nnoHasActiveTrainingLabExamples()) {
+	// Only explicitly labelled teaching rows may enable the preview. The
+	// filtered journal can contain DEMO rows: requiring an empty journal hid
+	// both training charts even when every visible record was a demo record.
+	// The source-scope guard rejects mixed production/teaching data; laboratory
+	// fallback still requires an empty production journal.
+	trainingOnly := nnoShouldUseSyntheticPreview(failureEvents)
+	if len(nnoFleetCycleSamples) == 0 && (trainingOnly || (len(events) == 0 && nnoHasActiveTrainingLabExamples())) {
 		nnoFleetCycleSamples = nnoSyntheticCycleSamples(months)
 		nnoFleetSyntheticPreview = len(nnoFleetCycleSamples) > 0
 	}
