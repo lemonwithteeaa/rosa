@@ -434,11 +434,14 @@ func layoutEconomicsVisualReference(w, h int32) {
 	setEconomicsReferenceVisible(econ813BreakTitle, false)
 	// Preserve the quantitative breakdown on normal desktops. On compact
 	// screens prioritize a readable engineering conclusion in the same band.
-	if ultra {
+	if compact {
+		// On laptop-height work areas there is no room to squeeze two readable
+		// text panels into the same 54–78 px band. Keep the conclusion readable;
+		// numeric breakdown remains available in the formula details.
 		setEconomicsReferenceVisible(econ812Breakdown, false)
 		setPos(econTechnologistBrief, x, py(breakY), cw, breakH)
 	} else {
-		breakdownH := max32(42, breakH*56/100)
+		breakdownH := int32(64)
 		setEconomicsReferenceVisible(econ812Breakdown, true)
 		setPos(econ812Breakdown, x, py(breakY), cw, breakdownH)
 		setPos(econTechnologistBrief, x, py(breakY+breakdownH+2), cw, breakH-breakdownH-2)
