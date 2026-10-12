@@ -454,13 +454,21 @@ func refreshNNOFleetUI() {
 	nnoFleetMonthData, nnoFleetEventData = months, events
 	nnoFleetCycleSamples = nnoVerifiedCycleSamples()
 	nnoFleetSyntheticPreview = false
-	// Only explicitly labelled teaching rows may enable the preview. The
-	// filtered journal can contain DEMO rows: requiring an empty journal hid
-	// both training charts even when every visible record was a demo record.
-	// The source-scope guard rejects mixed production/teaching data; laboratory
-	// fallback still requires an empty production journal.
+	// A verified cycle in another date range or lift group must not hide the
+	// teaching preview for the selected scope. Never merge preview values into
+	// production results or the official NNO-12 calculation.
+	verifiedHere := false
+	for _, sample := range nnoFleetCycleSamples {
+		if (nnoSelectedGroup() == "Все способы" || sample.Group == nnoSelectedGroup()) &&
+			nnoSampleInWindow(sample, nnoFleetDateFrom, nnoFleetDateTo) {
+			verifiedHere = true
+			break
+		}
+	}
+	// DEMO rows may remain visible in the journal; their presence must not
+	// suppress the training charts as long as the selected scope is demo-only.
 	trainingOnly := nnoShouldUseSyntheticPreview(failureEvents)
-	if len(nnoFleetCycleSamples) == 0 && (trainingOnly || (len(events) == 0 && nnoHasActiveTrainingLabExamples())) {
+	if !verifiedHere && (trainingOnly || (len(events) == 0 && nnoHasActiveTrainingLabExamples())) {
 		nnoFleetCycleSamples = nnoSyntheticCycleSamples(months)
 		nnoFleetSyntheticPreview = len(nnoFleetCycleSamples) > 0
 	}
@@ -1424,20 +1432,19 @@ func nnoHasActiveTrainingLabExamples() bool {
 	return false
 }
 
-func nnoShouldUseSyntheticPreview(events []FailureEvent) bool {
-	// Preview is opt-in through the presence of labelled teaching source rows.
-	// Respect the current period, group and source filter, and never mix a
-	// synthetic preview with production/ambiguous events in the same scope.
-	if nnoSelectedDataSource() != "" || len(events) == 0 {
+// A pure selection rule: production and teaching records must not be mixed
+// within the same month window and lift group.
+func nnoTrainingOnlyInScope(events []FailureEvent, group string, from, to time.Time) bool {
+	if len(events) == 0 || from.IsZero() || to.IsZero() || from.After(to) {
 		return false
 	}
 	training, other := 0, 0
 	for _, e := range events {
-		if e.Draft || (nnoSelectedGroup() != "Все способы" && nnoMethodOfFailure(e) != nnoSelectedGroup()) {
+		if e.Draft || (group != "Все способы" && nnoMethodOfFailure(e) != group) {
 			continue
 		}
 		date, err := failureDate(e.Date)
-		if err != nil || date.Before(nnoFleetDateFrom) || date.After(nnoFleetDateTo) {
+		if err != nil || date.Before(from) || date.After(to) {
 			continue
 		}
 		src := strings.ToLower(strings.TrimSpace(e.Source))
@@ -1448,6 +1455,13 @@ func nnoShouldUseSyntheticPreview(events []FailureEvent) bool {
 		}
 	}
 	return training > 0 && other == 0
+}
+
+func nnoShouldUseSyntheticPreview(events []FailureEvent) bool {
+	if nnoSelectedDataSource() != "" {
+		return false
+	}
+	return nnoTrainingOnlyInScope(events, nnoSelectedGroup(), nnoFleetDateFrom, nnoFleetDateTo)
 }
 
 func nnoSyntheticCycleSamples(months []nnoMonth) []nnoCycleSample {
