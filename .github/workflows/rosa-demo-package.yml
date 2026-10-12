@@ -21,7 +21,7 @@ jobs:
         working-directory: Source
         shell: pwsh
         run: |
-          go test -count=1 -run 'TestNNOToolbar|TestNNOTrainingPreview|TestNNORollingHitDetectsSegmentsNotOnlyDots|TestNNOLegendUsesReadableCompactLabels|TestEconomicsConclusionDoesNotImplyApproval' .
+          go test -count=1 -run 'TestNNOToolbar|TestNNOTrainingPreview|TestNNORollingHitDetectsSegmentsNotOnlyDots|TestNNOLegendUsesReadableCompactLabels|TestEconomicsConclusionDoesNotImplyApproval|TestEconomicsFundDetailPreservesEveryLongValue' .
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Create demonstration package
         shell: pwsh
