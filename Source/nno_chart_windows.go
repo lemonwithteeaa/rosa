@@ -139,39 +139,60 @@ func nnoRollingScale() float64 {
 	return nnoApplyChartZoom(nnoChartScale(maxDays), 0)
 }
 
+// A click anywhere along a drawn segment resolves to the nearest real
+// monthly observation. Do not interpolate an invented production value.
 func nnoPickRolling(rc RECT, x, y int32) nnoRollingSelection {
 	plot, count := nnoRollingPlot(rc), len(nnoFleetMonthData)
-	if count == 0 || plot.Right-plot.Left < 130 || plot.Bottom-plot.Top < 55 {
+	if count == 0 || plot.Right-plot.Left < 130 || plot.Bottom-plot.Top < 55 ||
+		x < plot.Left-8 || x > plot.Right+8 || y < plot.Top-8 || y > plot.Bottom+8 {
 		return nnoRollingSelection{}
 	}
 	scale := nnoRollingScale()
-	best, bestDistance := nnoRollingSelection{}, int64(121)
+	best, bestDistance := nnoRollingSelection{}, float64(14*14)
 	for g := 0; g < nnoMethodCount; g++ {
 		if nnoSelectedGroup() != "Все способы" && nnoSelectedGroup() != nnoMethodName(g) {
 			continue
 		}
-		for i, s := range nnoFleetSeries[g] {
-			if !s.Defined {
+		for mode := 0; mode < 2; mode++ {
+			if mode == 1 && !nnoFleetShowBoth {
 				continue
 			}
-			px := plot.Left + int32(i)*(plot.Right-plot.Left)/int32(maxIntChart(count-1, 1))
-			for mode := 0; mode < 2; mode++ {
-				median := nnoFleetShowMedian || mode == 1
-				if mode == 1 && !nnoFleetShowBoth {
+			median := (nnoFleetShowMedian && !nnoFleetShowBoth) || mode == 1
+			var previous nnoRollingSelection
+			var prevX, prevY int32
+			for i, stats := range nnoFleetSeries[g] {
+				if !stats.Defined {
+					previous.Valid = false
 					continue
 				}
-				if nnoFleetShowBoth {
-					median = mode == 1
-				}
-				value := s.Mean
+				value := stats.Mean
 				if median {
-					value = s.Median
+					value = stats.Median
 				}
+				px := plot.Left + int32(i)*(plot.Right-plot.Left)/int32(maxIntChart(count-1, 1))
 				py := plot.Bottom - int32(value/scale*float64(plot.Bottom-plot.Top))
-				dx, dy := int64(x-px), int64(y-py)
+				current := nnoRollingSelection{Group: g, Month: i, Median: median, Value: value, Valid: true}
+				dx, dy := float64(x-px), float64(y-py)
 				if d := dx*dx + dy*dy; d < bestDistance {
-					bestDistance, best = d, nnoRollingSelection{Group: g, Month: i, Median: median, Value: value, Valid: true}
+					bestDistance, best = d, current
 				}
+				if previous.Valid {
+					segX, segY := float64(px-prevX), float64(py-prevY)
+					length := segX*segX + segY*segY
+					if length > 0 {
+						t := math.Max(0, math.Min(1, (float64(x-prevX)*segX+float64(y-prevY)*segY)/length))
+						deltaX := float64(x-prevX) - t*segX
+						deltaY := float64(y-prevY) - t*segY
+						if d := deltaX*deltaX + deltaY*deltaY; d < bestDistance {
+							bestDistance = d
+							best = previous
+							if t >= 0.5 {
+								best = current
+							}
+						}
+					}
+				}
+				previous, prevX, prevY = current, px, py
 			}
 		}
 	}
@@ -187,10 +208,10 @@ func nnoRollingWndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uin
 			nnoScrollBy(120)
 		}
 		return 0
-	case WM_LBUTTONDOWN:
+	case 0x0203: // WM_LBUTTONDBLCLK: the expanded view is an explicit action.
 		nnoOpenExpandedChart(0)
 		return 0
-	case 0x0200:
+	case WM_LBUTTONDOWN, 0x0200:
 		if nnoFleetShowEventTrend {
 			break
 		}
@@ -979,6 +1000,11 @@ func nnoDrawExpandedAxisCaptions(hdc uintptr, rc, plot RECT, chart int, events b
 // its marker share one vertical center, including at 125%/150% DPI.
 func nnoChartLegendTextCentered(hdc uintptr, content string, bounds RECT, color uintptr) {
 	font := hFontButtonCompact
+	// The explanatory legend uses the smaller evidence font where available.
+	// Its height is more predictable in compact panels at 125/150% DPI.
+	if hFontReportEvidence != 0 {
+		font = hFontReportEvidence
+	}
 	if font == 0 {
 		font = hFont
 	}
@@ -1074,6 +1100,12 @@ func nnoDrawDistributionLegend(hdc uintptr, rc, plot RECT) {
 	nnoChartStroke(hdc, []POINT{{X: panel.Left, Y: panel.Top}, {X: panel.Right, Y: panel.Top}, {X: panel.Right, Y: panel.Bottom}, {X: panel.Left, Y: panel.Bottom}, {X: panel.Left, Y: panel.Top}}, rgb(214, 225, 236), 1, false)
 	nnoChartText(hdc, "ОБОЗНАЧЕНИЯ", RECT{Left: panel.Left + 6, Top: panel.Top + 3, Right: panel.Right - 6, Bottom: panel.Top + 24}, rgb(25, 65, 112), true, true)
 	labels := [4]string{"Диапазон типичных значений", "Основные 50 % значений", "Медианная наработка", "Средняя наработка"}
+	// A small on-screen graph can have fewer than 200 physical pixels after
+	// DPI scaling. Preserve the meaning with compact wording rather than
+	// clipping a third line of large text at the bottom of its legend row.
+	if panel.Bottom-panel.Top < 207 || panel.Right-panel.Left < 235 {
+		labels = [4]string{"Типичный диапазон", "Основные 50 %", "Медиана", "Средняя"}
+	}
 	rows := nnoDistributionLegendRows(panel)
 	for i, row := range rows {
 		if row.Bottom-row.Top < 18 {
