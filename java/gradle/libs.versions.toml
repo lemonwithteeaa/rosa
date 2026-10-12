@@ -1,0 +1,7 @@
+[versions]
+archunit = "1.4.1"
+javafx = "21.0.8"
+
+[libraries]
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
+
