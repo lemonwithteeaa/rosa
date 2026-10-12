@@ -1,0 +1,37 @@
+name: ROSA Windows regression validation
+
+on:
+  push:
+    branches:
+      - fix/824-training-charts-20261012
+  workflow_dispatch:
+
+jobs:
+  verify-windows:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+      - name: Check NNO training and layout regressions
+        working-directory: Source
+        shell: pwsh
+        run: |
+          go test -run 'TestNNOToolbar|TestNNOTrainingPreview' -count=1 .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Compile Windows GUI candidate
+        working-directory: Source
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path ../validation-artifact | Out-Null
+          go build -trimpath -ldflags '-H windowsgui' -o ../validation-artifact/ROSA_824_patch_validation.exe .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Upload non-release candidate for native smoke check
+        uses: actions/upload-artifact@v4
+        with:
+          name: ROSA-824-patch-validation-windows-x64
+          path: validation-artifact/ROSA_824_patch_validation.exe
+          if-no-files-found: error
