@@ -1,0 +1,83 @@
+name: Java migration
+
+on:
+  push:
+    paths:
+      - "java/**"
+      - ".github/workflows/java-migration.yml"
+  pull_request:
+    paths:
+      - "java/**"
+      - ".github/workflows/java-migration.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: java-migration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Unit, compatibility and architecture tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: java
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Test Java migration
+        run: ./gradlew test --no-daemon
+
+  build-windows:
+    name: Build Windows Java app image
+    needs: test
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: java
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Build application distribution
+        shell: pwsh
+        run: .\gradlew.bat :rosa-launcher:installDist --no-daemon
+
+      - name: Package self-contained Windows application
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force java-artifacts | Out-Null
+          jpackage `
+            --type app-image `
+            --name ROSA-Java-Preview `
+            --dest java-artifacts `
+            --input modules\rosa-launcher\build\install\rosa-launcher\lib `
+            --main-jar rosa-launcher-0.1.0-SNAPSHOT.jar `
+            --main-class ru.rosa.launcher.RosaLauncher `
+            --app-version 0.1.0 `
+            --vendor ROSA
+          Compress-Archive `
+            -Path java-artifacts\ROSA-Java-Preview `
+            -DestinationPath java-artifacts\ROSA-Java-Preview-windows-x64.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rosa-java-preview-windows-x64
+          path: java/java-artifacts/ROSA-Java-Preview-windows-x64.zip
+          if-no-files-found: error
+
