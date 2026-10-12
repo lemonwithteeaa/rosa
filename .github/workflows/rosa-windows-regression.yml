@@ -20,7 +20,7 @@ jobs:
         working-directory: Source
         shell: pwsh
         run: |
-          go test -run 'TestNNOToolbar|TestNNOTrainingPreview' -count=1 .
+          go test -run 'TestNNOToolbar|TestNNOTrainingPreview|TestNNORollingHitDetectsSegmentsNotOnlyDots|TestNNOLegendUsesReadableCompactLabels|TestEconomicsConclusionDoesNotImplyApproval' -count=1 .
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Compile Windows GUI candidate
         working-directory: Source
