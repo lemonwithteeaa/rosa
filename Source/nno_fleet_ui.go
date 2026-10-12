@@ -194,6 +194,20 @@ func nnoRefreshDataChoices() {
 		selected = ""
 	}
 	sort.Strings(choices[1:])
+	// Keep an unchanged native ComboBox intact: resetting it on every page
+	// activation produces unnecessary notifications and native repaints.
+	same := len(choices) == len(nnoFleetDataChoices)
+	if same {
+		for i := range choices {
+			if choices[i] != nnoFleetDataChoices[i] {
+				same = false
+				break
+			}
+		}
+	}
+	if same && selected == nnoFleetDataSourceFilter {
+		return
+	}
 	nnoFleetDataChoices = choices
 	pSendMessageW.Call(uintptr(nnoFleetData), CB_RESETCONTENT, 0, 0)
 	selectedIndex := 0
@@ -1046,12 +1060,16 @@ func layoutNNOFleetUI(w, h int32) {
 	// ListViews show a misleading empty strip that looks like an extra column.
 	layoutNNOFleetColumns(nnoFleetMethods, rightW, true, []int32{110, 48, 65, 65, 74, 65, 65, 74, 76, 82, 75, 75, 134})
 	layoutNNOFleetColumns(nnoFleetFundMethods, rightW, true, []int32{182, 84, 84, 88, 98, 154})
-	layoutNNOFleetColumns(nnoFleetMonths, leftW, true, []int32{96, 96, 84, 118, 110, 128, 240, 95, 95, 95, 95, 98, 95, 98, 98, 98, 98, 101, 98})
-	for col := 7; col < 19; col++ {
+	// Determine the active columns BEFORE laying out the native ListView.
+	// Previously every layout expanded six hidden columns and immediately
+	// collapsed them again, forcing full-grid repaints on page activation.
+	monthWidths := []int32{96, 96, 84, 118, 110, 128, 240, 95, 95, 95, 95, 98, 95, 98, 98, 98, 98, 101, 98}
+	for col := 7; col < len(monthWidths); col++ {
 		if (col >= 13) != nnoFleetShowMedian {
-			pSendMessageW.Call(uintptr(nnoFleetMonths), LVM_SETCOLUMNWIDTH, uintptr(col), 0)
+			monthWidths[col] = 0
 		}
 	}
+	layoutNNOFleetColumns(nnoFleetMonths, leftW, true, monthWidths)
 	layoutNNOFleetColumns(nnoFleetEvents, contentW, true, []int32{150, 112, 110, 96, 96, 110, 145, 105, 160, 200, 115, 126})
 }
 
@@ -1072,6 +1090,15 @@ func layoutNNOFleetColumns(list syscall.Handle, total int32, hasVerticalScroll b
 		widths[len(widths)-1] += available - used
 	}
 	for i, width := range widths {
+		if width == 0 {
+			// The shared setter intentionally rejects zero; hidden columns are
+			// the exception and must only be resized if currently nonzero.
+			current, _, _ := pSendMessageW.Call(uintptr(list), 0x101D, uintptr(i), 0) // LVM_GETCOLUMNWIDTH
+			if current != 0 {
+				pSendMessageW.Call(uintptr(list), LVM_SETCOLUMNWIDTH, uintptr(i), 0)
+			}
+			continue
+		}
 		setListColumnWidth(list, i, width)
 	}
 }
