@@ -1095,7 +1095,14 @@ func layoutNNOFleetColumns(list syscall.Handle, total int32, hasVerticalScroll b
 	}
 	if used < available {
 		widths = append([]int32(nil), widths...)
-		widths[len(widths)-1] += available - used
+		// Spare pixels belong to the last visible column. The final physical
+		// column may be deliberately hidden in the mean/median view.
+		for i := len(widths) - 1; i >= 0; i-- {
+			if widths[i] > 0 {
+				widths[i] += available - used
+				break
+			}
+		}
 	}
 	for i, width := range widths {
 		if width == 0 {
