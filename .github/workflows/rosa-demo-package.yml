@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - fix/824-training-charts-20261012
-    paths:
-      - '.github/workflows/rosa-demo-package.yml'
   workflow_dispatch:
 
 permissions:
@@ -23,7 +21,7 @@ jobs:
         working-directory: Source
         shell: pwsh
         run: |
-          go test -count=1 -run 'TestNNOToolbar|TestNNOTrainingPreview' .
+          go test -count=1 -run 'TestNNOToolbar|TestNNOTrainingPreview|TestNNORollingHitDetectsSegmentsNotOnlyDots|TestNNOLegendUsesReadableCompactLabels|TestEconomicsConclusionDoesNotImplyApproval' .
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Create demonstration package
         shell: pwsh
