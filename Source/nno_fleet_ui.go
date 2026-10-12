@@ -319,7 +319,7 @@ func buildNNOFleetUI() {
 	nnoFleetZoomReset = nnoAttach(button(ID_MRP, "100%", 242, 315, 54, 22, ID_NNO_ZOOM_RESET))
 	nnoFleetZoomIn = nnoAttach(button(ID_MRP, "+", 242, 315, 26, 22, ID_NNO_ZOOM_IN))
 	nnoFleetZoomDialog = nnoAttach(button(ID_MRP, "Масштаб…", 242, 315, 112, 28, ID_NNO_ZOOM_DIALOG))
-	nnoFleetChart = nnoAttach(create("STATIC", "", WS_CHILD|WS_BORDER|SS_OWNERDRAW, 242, py(315), 700, 200, hMain, ID_NNO_TREND))
+	nnoFleetChart = nnoAttach(create("STATIC", "", WS_CHILD|WS_BORDER|SS_OWNERDRAW|SS_NOTIFY, 242, py(315), 700, 200, hMain, ID_NNO_TREND))
 	addPageControl(ID_MRP, nnoFleetChart)
 	initNNORollingInteraction()
 	nnoFleetMethodTitle = nnoSectionBand(ID_NNO_SECTION_FIRST+1, "РАСПРЕДЕЛЕНИЕ НАРАБОТКИ · ПО СПОСОБАМ")
