@@ -19,6 +19,7 @@ var (
 	econCompareList       syscall.Handle
 	econFundFilterCombo   syscall.Handle
 	econConclusionTitle   syscall.Handle
+	econTechnologistBrief syscall.Handle
 	econHeaderDivider     syscall.Handle
 	econAtomicLayoutDepth int
 	econ812TableHeader    syscall.Handle
@@ -67,6 +68,9 @@ func buildEconomicsVisualReference() {
 		{"Обновлено", 160}, {"Состояние", 230},
 	})
 	econConclusionTitle = label(ID_ECON, "РАСЧЁТ И ВЫВОД ДЛЯ ТЕХНОЛОГА", 242, 620, 900, 24)
+	// Always-visible concise assessment; the original full result stays
+	// available through the 'Formulas and assumptions' action.
+	econTechnologistBrief = edit(ID_ECON, "ВЫВОД ТЕХНОЛОГУ: выполните расчёт выбранной схемы.", 242, 620, 900, 54, true, true, 0)
 	// A subtle native separator closes the identity/status block. No custom painting.
 	econHeaderDivider = create("STATIC", "", WS_CHILD|0x00000010 /* SS_ETCHEDHORZ */, 242, py(246), 900, 2, hMain, 0)
 	addPageControl(ID_ECON, econHeaderDivider)
@@ -121,6 +125,7 @@ func refreshEconomicsVisualReference() {
 		refreshEconomicsFundArchive()
 		refreshEconomicsMetricCards()
 		refreshEconomics812Display()
+		refreshEconomicsTechnologistBrief()
 		refreshEconomics812ScenarioCards()
 		return
 	}
@@ -150,6 +155,7 @@ func refreshEconomicsVisualReference() {
 	// Cross-fund archive is never limited to the globally selected object.
 	refreshEconomicsFundArchive()
 	refreshEconomics812Display()
+	refreshEconomicsTechnologistBrief()
 	refreshEconomics812ScenarioCards()
 }
 
@@ -426,7 +432,21 @@ func layoutEconomicsVisualReference(w, h int32) {
 	setEconomicsReferenceVisible(econCalculateButton, false)
 
 	setEconomicsReferenceVisible(econ813BreakTitle, false)
-	setPos(econ812Breakdown, x, py(breakY), cw, breakH)
+	// Preserve the quantitative breakdown on normal desktops. On compact
+	// screens prioritize a readable engineering conclusion in the same band.
+	if compact {
+		// On laptop-height work areas there is no room to squeeze two readable
+		// text panels into the same 54–78 px band. Keep the conclusion readable;
+		// numeric breakdown remains available in the formula details.
+		setEconomicsReferenceVisible(econ812Breakdown, false)
+		setPos(econTechnologistBrief, x, py(breakY), cw, breakH)
+	} else {
+		breakdownH := int32(64)
+		setEconomicsReferenceVisible(econ812Breakdown, true)
+		setPos(econ812Breakdown, x, py(breakY), cw, breakdownH)
+		setPos(econTechnologistBrief, x, py(breakY+breakdownH+2), cw, breakH-breakdownH-2)
+	}
+	setEconomicsReferenceVisible(econTechnologistBrief, true)
 	setEconomicsReferenceVisible(econConclusionTitle, false)
 	setEconomicsReferenceVisible(econResult, false)
 

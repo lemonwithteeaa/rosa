@@ -178,7 +178,10 @@ func refreshEconomicsFundArchive() {
 	}
 }
 
-const economicsFundArchiveCloseID = 9758
+const (
+	economicsFundArchiveCloseID = 9758
+	economicsFundArchiveRestoreID = 14969
+)
 
 var (
 	economicsFundDialogDone        bool
@@ -190,6 +193,8 @@ var (
 	economicsFundDialogTitle       syscall.Handle
 	economicsFundDialogSubtitle    syscall.Handle
 	economicsFundDialogClose       syscall.Handle
+	economicsFundDialogRestore     syscall.Handle
+	economicsFundDialogSelected    int
 )
 
 func layoutEconomicsFundDialog(hwnd uintptr, w, h int32) {
@@ -208,6 +213,7 @@ func layoutEconomicsFundDialog(hwnd uintptr, w, h int32) {
 	setPos(economicsFundDialogDetailTitle, margin, detailTitleY, max32(100, w-margin*2), 28)
 	detailY := detailTitleY + 32
 	setPos(economicsFundDialogDetail, margin, detailY, max32(100, w-margin*2), max32(115, closeY-detailY-10))
+	setPos(economicsFundDialogRestore, margin, closeY, 250, 38)
 	setPos(economicsFundDialogClose, max32(margin, w-182), closeY, 160, 38)
 	layoutEconomicsFundArchiveColumns(w)
 }
@@ -233,8 +239,8 @@ func layoutEconomicsFundArchiveColumns(w int32) {
 		setListColumnWidth(economicsFundDialogList, i, columnWidth)
 		used += columnWidth
 	}
-	setListColumnWidth(economicsFundDialogDetail, 0, available*34/100)
-	setListColumnWidth(economicsFundDialogDetail, 1, available-available*34/100)
+	// The lower details pane is a word-wrapped EDIT, not a ListView.
+	// Its entire client width is used for paragraphs; no column widths needed.
 }
 
 func economicsFundMethodLabel(index int) string {
@@ -245,10 +251,30 @@ func economicsFundMethodLabel(index int) string {
 	return fmt.Sprintf("МЕТОД %d", index+1)
 }
 
+// Full-value rendering for the archived method's economics, including long
+// sources and dated teaching history. A multiline EDIT wraps long values, and
+// the vertical scroll retains every paragraph without truncation.
+func economicsFundDetailsText(rows [][]string) string {
+	var result strings.Builder
+	for _, row := range rows {
+		if len(row) == 0 || strings.TrimSpace(row[0]) == "" {
+			continue
+		}
+		result.WriteString(strings.TrimSpace(row[0]))
+		if len(row) > 1 {
+			result.WriteString(":\r\n")
+			result.WriteString(row[1])
+		}
+		result.WriteString("\r\n\r\n")
+	}
+	return strings.TrimSpace(result.String())
+}
+
 func economicsFundDialogSelectScheme(index int) {
 	if economicsFundDialogDetail == 0 || index < 0 || index >= len(economicsFundDialogObject.Schemes) {
 		return
 	}
+	economicsFundDialogSelected = index
 	s := economicsFundDialogObject.Schemes[index]
 	methods := strings.Join(alternativeScenarioMethodsForCalculation(s), " + ")
 	if methods == "" {
@@ -256,9 +282,6 @@ func economicsFundDialogSelectScheme(index int) {
 	}
 	known := economicsScenarioCalculated(s)
 	setText(economicsFundDialogDetailTitle, economicsFundMethodLabel(index)+" · "+strings.TrimSpace(s.Name))
-	listBeginUpdate(economicsFundDialogDetail)
-	defer listEndUpdate(economicsFundDialogDetail)
-	listClear(economicsFundDialogDetail)
 	rows := [][]string{
 		{"Статус расчёта", econReferenceStatus(s)},
 		{"Методы / мероприятия", methods},
@@ -291,9 +314,28 @@ func economicsFundDialogSelectScheme(index int) {
 			rows = append(rows, []string{"Основание: " + point.LabPassID, "Формула " + point.Result.FormulaVersion + " · синтетические значения"})
 		}
 	}
-	for i, row := range rows {
-		listAdd(economicsFundDialogDetail, i, row)
+	setText(economicsFundDialogDetail, economicsFundDetailsText(rows))
+	// Switching schemes starts at the beginning of the readable report.
+	pSendMessageW.Call(uintptr(economicsFundDialogDetail), EM_SETSEL, 0, 0)
+}
+
+func economicsFundDialogApplySelected(hwnd uintptr) {
+	index := economicsFundDialogSelected
+	if index < 0 || index >= len(economicsFundDialogObject.Schemes) {
+		return
 	}
+	stored, err := restoreEconomicsFromArchive(economicsFundDialogObject.Schemes[index])
+	if err != nil {
+		msg("Предыдущие расчёты", err.Error(), MB_OK|MB_ICONWARNING)
+		return
+	}
+	if !stored {
+		// Old records have forecasts and CAPEX/OPEX but may lack the exact
+		// historical repair cost, horizon or inflation. Do not make them up.
+		msg("Предыдущие расчёты", "Прогноз и затраты перенесены. Полный снимок исходных параметров для этого старого расчёта не сохранён; проверьте оставшиеся поля.", MB_OK|MB_ICONINFORMATION)
+	}
+	economicsFundDialogDone = true
+	pDestroyWindowAuth.Call(hwnd)
 }
 
 func economicsFundArchiveWndProc(hwnd uintptr, message uint32, wParam, lParam uintptr) uintptr {
@@ -307,7 +349,7 @@ func economicsFundArchiveWndProc(hwnd uintptr, message uint32, wParam, lParam ui
 			pSendMessageW.Call(hwnd, WM_SETICON, ICON_SMALL, uintptr(hIconSmall))
 		}
 		economicsFundDialogTitle = modalCreate("STATIC", "ЭКОНОМИЧЕСКИЕ СХЕМЫ ОБЪЕКТА", WS_CHILD|WS_VISIBLE|SS_LEFT|SS_NOPREFIX, 22, 18, 1000, 32, parent, 0)
-		economicsFundDialogSubtitle = modalCreate("STATIC", readableObjectKey(economicsFundDialogObject.ObjectKey)+" · архив альтернатив А–Д · только просмотр · выберите строку для подробностей", WS_CHILD|WS_VISIBLE|SS_LEFT|SS_NOPREFIX, 22, 55, 1000, 44, parent, 0)
+		economicsFundDialogSubtitle = modalCreate("STATIC", readableObjectKey(economicsFundDialogObject.ObjectKey)+" · архив альтернатив А–Д · двойной щелчок по схеме — подставить данные при совпадении объекта", WS_CHILD|WS_VISIBLE|SS_LEFT|SS_NOPREFIX, 22, 55, 1000, 44, parent, 0)
 		economicsFundDialogDetailTitle = modalCreate("STATIC", "ВЫБЕРИТЕ МЕТОД ДЛЯ ПРОСМОТРА ЭКОНОМИКИ", WS_CHILD|WS_VISIBLE|SS_LEFT|SS_NOPREFIX, 22, 438, 1000, 28, parent, 0)
 		font, _, _ := pCreateFontW.Call(^uintptr(19-1), 0, 0, 0, 700, 1, 0, 0, 204, 0, 0, 5, 0, uintptr(unsafe.Pointer(p("Segoe UI"))))
 		economicsFundDialogAccentFont = syscall.Handle(font)
@@ -355,23 +397,19 @@ func economicsFundArchiveWndProc(hwnd uintptr, message uint32, wParam, lParam ui
 				econReferenceMoney(s.NetBenefitK, costKnown), ratio, payback, econReferenceStatus(s),
 			})
 		}
-		economicsFundDialogDetail = modalCreate("SysListView32", "", WS_CHILD|WS_VISIBLE|WS_BORDER|LVS_REPORT|LVS_SINGLESEL|LVS_SHOWSELALWAYS, 22, 468, 1000, 160, parent, 0)
-		pSendMessageW.Call(uintptr(economicsFundDialogDetail), LVM_SETEXTENDEDLISTVIEWSTYLE,
-			LVS_EX_FULLROWSELECT|LVS_EX_GRIDLINES|LVS_EX_DOUBLEBUFFER,
-			LVS_EX_FULLROWSELECT|LVS_EX_GRIDLINES|LVS_EX_DOUBLEBUFFER)
-		for i, c := range []struct {
-			name  string
-			width int32
-		}{{"Показатель", 330}, {"Значение", 650}} {
-			col := LVCOLUMN{Mask: LVCF_TEXT | LVCF_WIDTH | LVCF_FMT, Fmt: LVCFMT_LEFT, Cx: c.width, PszText: p(c.name)}
-			pSendMessageW.Call(uintptr(economicsFundDialogDetail), LVM_INSERTCOLUMNW, uintptr(i), uintptr(unsafe.Pointer(&col)))
-		}
-		if hFontPanel != 0 {
-			pSendMessageW.Call(uintptr(economicsFundDialogDetail), WM_SETFONT, uintptr(hFontPanel), 1)
+		// Native multiline EDIT wraps long descriptions and retains all their
+		// content behind a vertical scroll bar. ListView cannot wrap cells and
+		// previously selected an oversized bold font into 20-pixel rows.
+		economicsFundDialogDetail = modalCreate("EDIT", "", WS_CHILD|WS_VISIBLE|WS_BORDER|WS_VSCROLL|ES_MULTILINE|ES_AUTOVSCROLL|ES_READONLY, 22, 468, 1000, 160, parent, 0)
+		if hFontButtonCompact != 0 {
+			pSendMessageW.Call(uintptr(economicsFundDialogDetail), WM_SETFONT, uintptr(hFontButtonCompact), 1)
+		} else if hFont != 0 {
+			pSendMessageW.Call(uintptr(economicsFundDialogDetail), WM_SETFONT, uintptr(hFont), 1)
 		}
 		if len(economicsFundDialogObject.Schemes) > 0 {
 			economicsFundDialogSelectScheme(0)
 		}
+		economicsFundDialogRestore = modalCreate("BUTTON", "Подставить прежний расчёт", WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_PUSHBUTTON, 22, 668, 250, 38, parent, economicsFundArchiveRestoreID)
 		economicsFundDialogClose = modalCreate("BUTTON", "Закрыть", WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_PUSHBUTTON, 850, 668, 160, 38, parent, economicsFundArchiveCloseID)
 		layoutEconomicsFundDialog(hwnd, 1160, 700)
 		return 0
@@ -394,7 +432,7 @@ func economicsFundArchiveWndProc(hwnd uintptr, message uint32, wParam, lParam ui
 	case WM_NOTIFY:
 		if lParam != 0 {
 			hdr := (*NMHDR)(unsafe.Pointer(lParam))
-			if (hdr.HwndFrom == economicsFundDialogList || hdr.HwndFrom == economicsFundDialogDetail) && hdr.Code == NM_CUSTOMDRAW {
+			if hdr.HwndFrom == economicsFundDialogList && hdr.Code == NM_CUSTOMDRAW {
 				draw := (*NMLVCUSTOMDRAW)(unsafe.Pointer(lParam))
 				switch draw.NMCD.DrawStage {
 				case CDDS_PREPAINT:
@@ -403,17 +441,9 @@ func economicsFundArchiveWndProc(hwnd uintptr, message uint32, wParam, lParam ui
 					return CDRF_NOTIFYSUBITEMDRAW
 				case CDDS_ITEMPREPAINT | CDDS_SUBITEM:
 					if draw.SubItem == 0 {
-						if hdr.HwndFrom == economicsFundDialogList {
-							draw.ClrText = uint32(rgb(183, 20, 37))
-							if economicsFundDialogAccentFont != 0 {
-								pSelectObject.Call(uintptr(draw.NMCD.HDC), uintptr(economicsFundDialogAccentFont))
-							}
-						} else {
-							draw.ClrText = uint32(rgb(15, 48, 82))
-							if hFontHeaderBold != 0 {
-								pSelectObject.Call(uintptr(draw.NMCD.HDC), uintptr(hFontHeaderBold))
-							}
-						}
+						draw.ClrText = uint32(rgb(183, 20, 37))
+						// Respect native row height: do not select an oversized font
+						// into a ListView DC (it clips above/below the row borders).
 						return CDRF_NEWFONT
 					}
 				}
@@ -425,10 +455,17 @@ func economicsFundArchiveWndProc(hwnd uintptr, message uint32, wParam, lParam ui
 					index = int(act.IItem)
 				}
 				economicsFundDialogSelectScheme(index)
+				if hdr.Code == NM_DBLCLK {
+					economicsFundDialogApplySelected(hwnd)
+				}
 				return 0
 			}
 		}
 	case WM_COMMAND:
+		if int(wParam&0xffff) == economicsFundArchiveRestoreID {
+			economicsFundDialogApplySelected(hwnd)
+			return 0
+		}
 		if int(wParam&0xffff) == economicsFundArchiveCloseID {
 			economicsFundDialogDone = true
 			pDestroyWindowAuth.Call(hwnd)

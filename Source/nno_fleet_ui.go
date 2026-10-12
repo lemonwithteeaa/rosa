@@ -194,6 +194,20 @@ func nnoRefreshDataChoices() {
 		selected = ""
 	}
 	sort.Strings(choices[1:])
+	// Keep an unchanged native ComboBox intact: resetting it on every page
+	// activation produces unnecessary notifications and native repaints.
+	same := len(choices) == len(nnoFleetDataChoices)
+	if same {
+		for i := range choices {
+			if choices[i] != nnoFleetDataChoices[i] {
+				same = false
+				break
+			}
+		}
+	}
+	if same && selected == nnoFleetDataSourceFilter {
+		return
+	}
 	nnoFleetDataChoices = choices
 	pSendMessageW.Call(uintptr(nnoFleetData), CB_RESETCONTENT, 0, 0)
 	selectedIndex := 0
@@ -305,7 +319,7 @@ func buildNNOFleetUI() {
 	nnoFleetZoomReset = nnoAttach(button(ID_MRP, "100%", 242, 315, 54, 22, ID_NNO_ZOOM_RESET))
 	nnoFleetZoomIn = nnoAttach(button(ID_MRP, "+", 242, 315, 26, 22, ID_NNO_ZOOM_IN))
 	nnoFleetZoomDialog = nnoAttach(button(ID_MRP, "Масштаб…", 242, 315, 112, 28, ID_NNO_ZOOM_DIALOG))
-	nnoFleetChart = nnoAttach(create("STATIC", "", WS_CHILD|WS_BORDER|SS_OWNERDRAW, 242, py(315), 700, 200, hMain, ID_NNO_TREND))
+	nnoFleetChart = nnoAttach(create("STATIC", "", WS_CHILD|WS_BORDER|SS_OWNERDRAW|SS_NOTIFY, 242, py(315), 700, 200, hMain, ID_NNO_TREND))
 	addPageControl(ID_MRP, nnoFleetChart)
 	initNNORollingInteraction()
 	nnoFleetMethodTitle = nnoSectionBand(ID_NNO_SECTION_FIRST+1, "РАСПРЕДЕЛЕНИЕ НАРАБОТКИ · ПО СПОСОБАМ")
@@ -440,11 +454,21 @@ func refreshNNOFleetUI() {
 	nnoFleetMonthData, nnoFleetEventData = months, events
 	nnoFleetCycleSamples = nnoVerifiedCycleSamples()
 	nnoFleetSyntheticPreview = false
-	// The production journal intentionally filters out teaching rows. Inspect the
-	// untouched source history for an explicitly marked training dataset: using
-	// the filtered `events` made this branch unreachable after the RC806 split.
-	// Never replace nonempty real history with fabricated production results.
-	if len(nnoFleetCycleSamples) == 0 && len(events) == 0 && (nnoShouldUseSyntheticPreview(failureEvents) || nnoHasActiveTrainingLabExamples()) {
+	// A verified cycle in another date range or lift group must not hide the
+	// teaching preview for the selected scope. Never merge preview values into
+	// production results or the official NNO-12 calculation.
+	verifiedHere := false
+	for _, sample := range nnoFleetCycleSamples {
+		if (nnoSelectedGroup() == "Все способы" || sample.Group == nnoSelectedGroup()) &&
+			nnoSampleInWindow(sample, nnoFleetDateFrom, nnoFleetDateTo) {
+			verifiedHere = true
+			break
+		}
+	}
+	// DEMO rows may remain visible in the journal; their presence must not
+	// suppress the training charts as long as the selected scope is demo-only.
+	trainingOnly := nnoShouldUseSyntheticPreview(failureEvents)
+	if !verifiedHere && (trainingOnly || (len(events) == 0 && nnoHasActiveTrainingLabExamples())) {
 		nnoFleetCycleSamples = nnoSyntheticCycleSamples(months)
 		nnoFleetSyntheticPreview = len(nnoFleetCycleSamples) > 0
 	}
@@ -859,11 +883,17 @@ func layoutNNOFleetUI(w, h int32) {
 	setPos(nnoFleetFilter, boxes[2].X, controlY, boxes[2].W, 258)
 	setPos(nnoFleetDataLabel, boxes[3].X, labelY, boxes[3].W, 22)
 	setPos(nnoFleetData, boxes[3].X, controlY, boxes[3].W, 258)
-	setPos(nnoFleetUpdate, boxes[4].X, controlY, boxes[4].W, 34)
-	setPos(nnoFleetAudit, boxes[5].X, controlY, boxes[5].W, 34)
-	setPos(nnoFleetRules, boxes[6].X, controlY, boxes[6].W, 34)
-	setPos(nnoFleetObject, boxes[7].X, controlY, boxes[7].W, 34)
-	setPos(nnoFleetBack, boxes[7].X, controlY, boxes[7].W, 34)
+	// On compact windows actions occupy their own row. All native controls
+	// stay within the client area and the cards start below both rows.
+	actionY := controlY
+	if a.Mode == -1 {
+		actionY += 44
+	}
+	setPos(nnoFleetUpdate, boxes[4].X, actionY, boxes[4].W, 34)
+	setPos(nnoFleetAudit, boxes[5].X, actionY, boxes[5].W, 34)
+	setPos(nnoFleetRules, boxes[6].X, actionY, boxes[6].W, 34)
+	setPos(nnoFleetObject, boxes[7].X, actionY, boxes[7].W, 34)
+	setPos(nnoFleetBack, boxes[7].X, actionY, boxes[7].W, 34)
 	setMRPLayoutVisibility(nnoFleetBack, false)
 	// Full captions on standard/wide monitors. Only genuinely narrow windows
 	// receive shorter but unambiguous captions instead of truncated words.
@@ -885,7 +915,7 @@ func layoutNNOFleetUI(w, h int32) {
 		}
 		nnoFleetToolbarCaptionMode = a.Mode
 		switch a.Mode {
-		case 0:
+		case -1, 0:
 			setText(nnoFleetFilterLabel, "Способ:")
 			setText(nnoFleetRules, "Методика ›")
 			setText(nnoFleetObject, "Прогноз ›")
@@ -903,7 +933,7 @@ func layoutNNOFleetUI(w, h int32) {
 			setText(nnoFleetObject, "Прогноз объекта ›")
 		}
 	}
-	actionBottom := controlY + 34
+	actionBottom := actionY + 34
 	cardY := actionBottom + 8
 	columns, rows := int32(nnoMethodCount), int32(1)
 	cardGap, cardH := int32(6), int32(96)
@@ -1038,12 +1068,16 @@ func layoutNNOFleetUI(w, h int32) {
 	// ListViews show a misleading empty strip that looks like an extra column.
 	layoutNNOFleetColumns(nnoFleetMethods, rightW, true, []int32{110, 48, 65, 65, 74, 65, 65, 74, 76, 82, 75, 75, 134})
 	layoutNNOFleetColumns(nnoFleetFundMethods, rightW, true, []int32{182, 84, 84, 88, 98, 154})
-	layoutNNOFleetColumns(nnoFleetMonths, leftW, true, []int32{96, 96, 84, 118, 110, 128, 240, 95, 95, 95, 95, 98, 95, 98, 98, 98, 98, 101, 98})
-	for col := 7; col < 19; col++ {
+	// Determine the active columns BEFORE laying out the native ListView.
+	// Previously every layout expanded six hidden columns and immediately
+	// collapsed them again, forcing full-grid repaints on page activation.
+	monthWidths := []int32{96, 96, 84, 118, 110, 128, 240, 95, 95, 95, 95, 98, 95, 98, 98, 98, 98, 101, 98}
+	for col := 7; col < len(monthWidths); col++ {
 		if (col >= 13) != nnoFleetShowMedian {
-			pSendMessageW.Call(uintptr(nnoFleetMonths), LVM_SETCOLUMNWIDTH, uintptr(col), 0)
+			monthWidths[col] = 0
 		}
 	}
+	layoutNNOFleetColumns(nnoFleetMonths, leftW, true, monthWidths)
 	layoutNNOFleetColumns(nnoFleetEvents, contentW, true, []int32{150, 112, 110, 96, 96, 110, 145, 105, 160, 200, 115, 126})
 }
 
@@ -1061,9 +1095,25 @@ func layoutNNOFleetColumns(list syscall.Handle, total int32, hasVerticalScroll b
 	}
 	if used < available {
 		widths = append([]int32(nil), widths...)
-		widths[len(widths)-1] += available - used
+		// Spare pixels belong to the last visible column. The final physical
+		// column may be deliberately hidden in the mean/median view.
+		for i := len(widths) - 1; i >= 0; i-- {
+			if widths[i] > 0 {
+				widths[i] += available - used
+				break
+			}
+		}
 	}
 	for i, width := range widths {
+		if width == 0 {
+			// The shared setter intentionally rejects zero; hidden columns are
+			// the exception and must only be resized if currently nonzero.
+			current, _, _ := pSendMessageW.Call(uintptr(list), 0x101D, uintptr(i), 0) // LVM_GETCOLUMNWIDTH
+			if current != 0 {
+				pSendMessageW.Call(uintptr(list), LVM_SETCOLUMNWIDTH, uintptr(i), 0)
+			}
+			continue
+		}
 		setListColumnWidth(list, i, width)
 	}
 }
@@ -1389,20 +1439,19 @@ func nnoHasActiveTrainingLabExamples() bool {
 	return false
 }
 
-func nnoShouldUseSyntheticPreview(events []FailureEvent) bool {
-	// Preview is opt-in through the presence of labelled teaching source rows.
-	// Respect the current period, group and source filter, and never mix a
-	// synthetic preview with production/ambiguous events in the same scope.
-	if nnoSelectedDataSource() != "" || len(events) == 0 {
+// A pure selection rule: production and teaching records must not be mixed
+// within the same month window and lift group.
+func nnoTrainingOnlyInScope(events []FailureEvent, group string, from, to time.Time) bool {
+	if len(events) == 0 || from.IsZero() || to.IsZero() || from.After(to) {
 		return false
 	}
 	training, other := 0, 0
 	for _, e := range events {
-		if e.Draft || (nnoSelectedGroup() != "Все способы" && nnoMethodOfFailure(e) != nnoSelectedGroup()) {
+		if e.Draft || (group != "Все способы" && nnoMethodOfFailure(e) != group) {
 			continue
 		}
 		date, err := failureDate(e.Date)
-		if err != nil || date.Before(nnoFleetDateFrom) || date.After(nnoFleetDateTo) {
+		if err != nil || date.Before(from) || date.After(to) {
 			continue
 		}
 		src := strings.ToLower(strings.TrimSpace(e.Source))
@@ -1413,6 +1462,13 @@ func nnoShouldUseSyntheticPreview(events []FailureEvent) bool {
 		}
 	}
 	return training > 0 && other == 0
+}
+
+func nnoShouldUseSyntheticPreview(events []FailureEvent) bool {
+	if nnoSelectedDataSource() != "" {
+		return false
+	}
+	return nnoTrainingOnlyInScope(events, nnoSelectedGroup(), nnoFleetDateFrom, nnoFleetDateTo)
 }
 
 func nnoSyntheticCycleSamples(months []nnoMonth) []nnoCycleSample {

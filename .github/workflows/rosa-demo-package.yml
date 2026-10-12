@@ -1,0 +1,66 @@
+name: ROSA demo package Windows
+
+on:
+  push:
+    branches:
+      - fix/824-training-charts-20261012
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  demo-package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+      - name: Verify regression checks
+        working-directory: Source
+        shell: pwsh
+        run: |
+          go test -count=1 -run 'TestNNOToolbar|TestNNOTrainingPreview|TestNNORollingHitDetectsSegmentsNotOnlyDots|TestNNOLegendUsesReadableCompactLabels|TestEconomicsConclusionDoesNotImplyApproval|TestEconomicsFundDetailPreservesEveryLongValue' .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Create demonstration package
+        shell: pwsh
+        run: |
+          $stage = Join-Path $PWD 'dist/ROSA_DEMO_824_CORRECTED'
+          $train = Join-Path $stage 'Training'
+          New-Item -ItemType Directory -Force -Path $train | Out-Null
+          Push-Location Source
+          go build -trimpath -ldflags '-H windowsgui' -o (Join-Path $stage 'ROSA_824_corrected_demo.exe') .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Pop-Location
+          Copy-Item -Path 'Training/*.xlsx' -Destination $train -Force
+          Copy-Item -Path 'Training/*.csv' -Destination $train -Force
+          @'
+          РОСА · ДЕМОНСТРАЦИОННЫЙ КОМПЛЕКТ · 7.3.11.824-RC (исправленная ветка)
+
+          1. Распакуйте весь архив в отдельную папку на локальном диске.
+          2. Запустите ROSA_824_corrected_demo.exe.
+          3. Для демонстрации используйте учебные примеры, встроенные в программу.
+             В папке Training есть таблицы для примеров техрежима, отказов,
+             лабораторных данных и экономики.
+          4. Не заменяйте этой сборкой рабочее приложение: это кандидат
+             для демонстрации, а не утверждённый выпуск.
+          5. Данные в наборе искусственные и не предназначены для
+             производственных решений.
+          
+          Ограничение: отрисовка и переходы между некоторыми разделами
+          ещё требуют дополнительной проверки и стабилизации.
+          Исходники и история изменений:
+          https://github.com/lemonwithteeaa/rosa/pull/1
+          '@ | Set-Content -Path (Join-Path $stage 'READ_ME_FIRST.txt') -Encoding utf8
+          $exe = Join-Path $stage 'ROSA_824_corrected_demo.exe'
+          $hash = (Get-FileHash -Algorithm SHA256 $exe).Hash.ToLowerInvariant()
+          "$hash  ROSA_824_corrected_demo.exe" | Set-Content -Path (Join-Path $stage 'SHA256.txt') -Encoding ascii
+          Write-Output "EXE bytes: $((Get-Item $exe).Length)"
+          Write-Output "Training documents: $((Get-ChildItem $train -File).Count)"
+      - name: Upload complete demonstration package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ROSA-824-corrected-demo-complete
+          path: dist/
+          if-no-files-found: error

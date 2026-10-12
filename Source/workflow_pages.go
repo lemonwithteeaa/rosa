@@ -746,6 +746,11 @@ func calculateEconomicsFromUI() {
 		s.EconomicsStatus, s.EconomicsCalculated = "Расчёт актуален", time.Now().Format(time.RFC3339)
 		s.NetBenefitK, s.BenefitCostRatio, s.PaybackMonths = selected.NetBenefitForHorizonK, selected.BenefitCostRatio, r.PaybackMonths
 	})
+	if scenario, ok := activeAlternativeScenario(selectedObjectKey); ok {
+		if err := saveEconomicsInputsForScenario(scenario); err != nil {
+			diagLog("ECON input snapshot save failed: %v", err)
+		}
+	}
 	setText(econDeferralInfo, fmt.Sprintf("Отсрочка ремонта, мес.: %.1f", economicsDeferralMonths(currentMRP, selected.MRPDays)))
 	refreshEconomicsDecisionIndicators()
 }
@@ -841,6 +846,11 @@ func calculateAllAlternativeEconomics() {
 			s.AnnualOPEXRub, s.OneTimeCAPEXRub = opex, capex
 			s.NetBenefitK, s.BenefitCostRatio, s.PaybackMonths = selected.NetBenefitForHorizonK, selected.BenefitCostRatio, result.PaybackMonths
 		})
+		scenario.ForecastLowDays, scenario.ForecastBaseDays, scenario.ForecastHighDays = forecast.ForecastLow, forecast.ForecastBase, forecast.ForecastHigh
+		scenario.AnnualOPEXRub, scenario.OneTimeCAPEXRub = opex, capex
+		if err := saveEconomicsInputsForScenario(scenario); err != nil {
+			diagLog("ECON fleet input snapshot save failed: %v", err)
+		}
 		fmt.Fprintf(&b, "%s | %s | %s | %s\r\nМетоды: %s\r\nМРП: %.0f / %.0f / %.0f сут. | до цели: %+.0f сут. | OPEX %.0f руб./год | CAPEX %.0f руб. | предотвращённые расходы %.1f тыс. руб./год | чистая выгода %.1f тыс. руб.\r\n%s\r\nОснование: %s\r\n\r\n",
 			scenario.Name, scenario.Availability, scenario.Status, dash(scenario.SelectionKind), strings.Join(methods, " + "), forecast.ForecastLow, forecast.ForecastBase, forecast.ForecastHigh,
 			forecast.ForecastBase-targetRunlifeResolvedForSelectedObject().Days, opex, capex, selected.GrossBenefitPerYearK, selected.NetBenefitForHorizonK,
