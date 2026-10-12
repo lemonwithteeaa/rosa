@@ -861,11 +861,17 @@ func layoutNNOFleetUI(w, h int32) {
 	setPos(nnoFleetFilter, boxes[2].X, controlY, boxes[2].W, 258)
 	setPos(nnoFleetDataLabel, boxes[3].X, labelY, boxes[3].W, 22)
 	setPos(nnoFleetData, boxes[3].X, controlY, boxes[3].W, 258)
-	setPos(nnoFleetUpdate, boxes[4].X, controlY, boxes[4].W, 34)
-	setPos(nnoFleetAudit, boxes[5].X, controlY, boxes[5].W, 34)
-	setPos(nnoFleetRules, boxes[6].X, controlY, boxes[6].W, 34)
-	setPos(nnoFleetObject, boxes[7].X, controlY, boxes[7].W, 34)
-	setPos(nnoFleetBack, boxes[7].X, controlY, boxes[7].W, 34)
+	// On compact windows actions occupy their own row. All native controls
+	// stay within the client area and the cards start below both rows.
+	actionY := controlY
+	if a.Mode == -1 {
+		actionY += 44
+	}
+	setPos(nnoFleetUpdate, boxes[4].X, actionY, boxes[4].W, 34)
+	setPos(nnoFleetAudit, boxes[5].X, actionY, boxes[5].W, 34)
+	setPos(nnoFleetRules, boxes[6].X, actionY, boxes[6].W, 34)
+	setPos(nnoFleetObject, boxes[7].X, actionY, boxes[7].W, 34)
+	setPos(nnoFleetBack, boxes[7].X, actionY, boxes[7].W, 34)
 	setMRPLayoutVisibility(nnoFleetBack, false)
 	// Full captions on standard/wide monitors. Only genuinely narrow windows
 	// receive shorter but unambiguous captions instead of truncated words.
@@ -887,7 +893,7 @@ func layoutNNOFleetUI(w, h int32) {
 		}
 		nnoFleetToolbarCaptionMode = a.Mode
 		switch a.Mode {
-		case 0:
+		case -1, 0:
 			setText(nnoFleetFilterLabel, "Способ:")
 			setText(nnoFleetRules, "Методика ›")
 			setText(nnoFleetObject, "Прогноз ›")
@@ -905,7 +911,7 @@ func layoutNNOFleetUI(w, h int32) {
 			setText(nnoFleetObject, "Прогноз объекта ›")
 		}
 	}
-	actionBottom := controlY + 34
+	actionBottom := actionY + 34
 	cardY := actionBottom + 8
 	columns, rows := int32(nnoMethodCount), int32(1)
 	cardGap, cardH := int32(6), int32(96)
