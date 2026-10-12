@@ -2120,10 +2120,20 @@ func refreshMethodsSuggestionInfo() {
 	}
 	setText(methodsSuggestionInfo, basis)
 	setText(methodsImplementation, methodsImplementationText(selectedObjectKey))
-	relayoutMethodsWorkflowCurrent()
+	// The enclosing full-page render performs its own final geometry pass.
+	// A user-driven selection still relayouts immediately.
+	if !methodsRenderingWorkflow {
+		relayoutMethodsWorkflowCurrent()
+	}
 }
 
 func relayoutMethodsWorkflowCurrent() {
+	// activatePage always runs layoutCurrentPage after refreshPage. Doing
+	// another complete methods layout during that refresh repeats GDI text
+	// measurement and hundreds of native control updates on the UI thread.
+	if pageSwitching && currentPage == ID_ACTIVITIES {
+		return
+	}
 	var rc RECT
 	if r, _, _ := pGetClientRect.Call(uintptr(hMain), uintptr(unsafe.Pointer(&rc))); r != 0 {
 		layoutMethodsWorkflow(rc.Right-rc.Left, rc.Bottom-rc.Top)
@@ -2264,7 +2274,12 @@ func refreshMethodsDashboardCards() {
 	setText(methodsForecastNote, note)
 }
 
+var methodsRenderingWorkflow bool
+
 func renderMethodsWorkflowUI() {
+	previouslyRendering := methodsRenderingWorkflow
+	methodsRenderingWorkflow = true
+	defer func() { methodsRenderingWorkflow = previouslyRendering }()
 	finishEvaluation := beginMethodsEvaluation()
 	defer finishEvaluation()
 	key := strings.TrimSpace(selectedObjectKey)
