@@ -13,6 +13,42 @@ type nnoToolbarArrangement struct {
 // update, audit, password-protected method, object forecast.
 func nnoToolbarArrange(x, width int32) nnoToolbarArrangement {
 	var a nnoToolbarArrangement
+	// Below 877 px the eight native controls cannot retain readable minimum
+	// widths in a single row. Use two complete rows, rather than stretching
+	// controls beyond their parent or shrinking date boxes until they clip.
+	if width < 877 {
+		a.Mode = -1
+		minimum := [2][4]int32{
+			{96, 96, 176, 138},    // from, to, lift, source
+			{132, 138, 196, 142}, // update, audit, rules, forecast
+		}
+		weights := [2][4]int32{{1, 1, 2, 2}, {1, 1, 2, 1}}
+		for row := 0; row < 2; row++ {
+			const gap int32 = 8
+			var base, totalWeight int32
+			for i := 0; i < 4; i++ {
+				base += minimum[row][i]
+				totalWeight += weights[row][i]
+			}
+			base += 3 * gap
+			extra, assigned := max32(0, width-base), int32(0)
+			xpos := x
+			for i := 0; i < 4; i++ {
+				add := extra * weights[row][i] / totalWeight
+				if i == 3 {
+					add = extra - assigned
+				}
+				assigned += add
+				a.Cells[row*4+i] = nnoToolbarCell{X: xpos, W: minimum[row][i] + add}
+				xpos += minimum[row][i] + add
+				if i < 3 {
+					xpos += gap
+					a.Gaps[row*4+i] = gap
+				}
+			}
+		}
+		return a
+	}
 	minimum := [8]int32{88, 88, 120, 105, 88, 99, 136, 105}
 	a.Gaps = [7]int32{10, 8, 6, 6, 6, 6, 6}
 	if width >= 1310 {
